@@ -260,7 +260,6 @@
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_80A_SCL' ;short_label='Body Odor Severity' ; output;
 	 run;
 
-	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Error checks --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
@@ -309,10 +308,6 @@
 	%if %length(&test.)=0 %then %do;
     	%let test=c;
 	%end;
-/* 		%else %if %lowcase(%sysfunc(strip("&test."))) ^= ("f" "c") %then %do; */
-/* 			%let test =c; */
-/* 		%end; */
-	
 	%if %length(&type.) = 0 %then %do;
 		%let type = bl_adjusted;
 	%end;
@@ -323,14 +318,12 @@
 	%if %lowcase(%sysfunc(strip("&type."))) ^= ("max_post_bl") %then %do;
 		%let type = bl_adjusted;
 	%end;
-	
 	%if &type. = bl_adjusted %then %do;
 		%let adjust_label = With baseline adjustment;
 	%end;
 		%else %if &type. = max_post_bl %then %do;
 			%let adjust_label = With max score post baseline;
 		%end;
-
     %if %length(&arm_var.) ^= 0 %then %do;
 		proc sql noprint;
 			select count(distinct(&arm_var.))
@@ -342,7 +335,6 @@
 			%let arm_count = 1;
 			%let arm_var = __ovrlarm__;
 		%end;
-    
 	data ____proctcae_comp_vars;
 		set ____proctcae_vars;
 		num = input(compress(name,,"kd"), best8.);
@@ -355,6 +347,7 @@
 		comp_label=substr(short_label, 1, pos-2);
 		name = "PROCTCAE_"||strip(num)||"_COMP";
 	run;
+	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Defaults / references --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
@@ -451,7 +444,6 @@
 	%end;
 	/* --------------------------------------------------------------------------------------- */
 	/* --------------------------------------------------------------------------------------- */
-
 	proc sql noprint;
 		select  strip(name)||"_present = input("||strip(name)||", present_fmt.);",
 				strip(name)||"_severe = input("||strip(name)||", severe_fmt.);",
@@ -547,7 +539,6 @@
 		proc sort data=____arm_item_counts;
 			by item;
 		run;
-		
 		data ____overall_item_rates2;
 			merge ____overall_item_rates(in=a) ____arm_item_counts(in=b);
 			by item;
@@ -971,7 +962,6 @@
 					 : sev_oth_labs separated by " "
 				from ____table_dat_conts
 				where substr(name, length(name)-1, 2) = "_n";
-				
 				select name,
 					   "define "||strip(name)||" / center;"
 				into : arm_rate_pres separated by " ",
