@@ -364,7 +364,7 @@
 			low - < .05 = "bold";
 	run;
 	proc contents data=&dsn. out=____&dsn._conts noprint;
-	run;
+	run; 
 	
 	/* --------------------------------------------------------------------------------------- */
 	/* --- Get baseline adjusted and unadjusted max scores for each subject accross cycles --- */
