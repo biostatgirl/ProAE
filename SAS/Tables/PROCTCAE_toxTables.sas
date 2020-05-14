@@ -876,7 +876,7 @@
 					set ____rd2;
 					if type = "present" then output ____rd_pres;
 						else if type = "severe" then output ____rd_sev;
-					keep item A_n B_n A_rate B_rate risk_ci;
+					keep item &arm_n. &arm_rate. risk_ci;
 				run;
 		
 				/* ---------------------------- */
@@ -943,7 +943,7 @@
 					by qnum;
 				run;
 			%end;
-		
+			
 			/* ----------------------------------------------------------------------------- */
 			/* --- Build the final tables (reports) --- */
 			/* ----------------------------------------------------------------------------- */
@@ -1066,7 +1066,7 @@
 	/* --- Clean up ----------------- */
 	/* ------------------------------ */
 	%exit:
-	proc datasets noprint;
-		delete ____: _SGSRT2_;
-	quit;
+/* 	proc datasets noprint; */
+/* 		delete ____: _SGSRT2_; */
+/* 	quit; */
 %mend;
