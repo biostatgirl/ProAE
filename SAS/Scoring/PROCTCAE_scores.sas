@@ -23,11 +23,13 @@
    |                  EX3: Question 73 of PRO-CTCAE should be: PROCTCAE_73A_IND
    |				
    |			   COMPOSITE SCORING
-   |				This macro also constructs PROCTC-AE composite scoring [2]. Composite score variables for 
-   |				respective PROCTC-AE item groups are created and named as PROCTCAE_##_COMP.
+   |				This macro also constructs PRO-CTCAE composite scoring [2]. Composite score variables for 
+   |				respective PRO-CTCAE item groups are created and named as PROCTCAE_##_COMP.
    |
    |				[1]	https://healthcaredelivery.cancer.gov/pro-ctcae/pro-ctcae_english.pdf
-   |				[2] source
+   |				[2] Ethan Basch, et al. Development of a Composite Scoring Algorithm for the 
+   |					National Cancer Institute’s Patient-Reported Outcomes version of the Common 
+   |					Terminology Criteria for Adverse Events (PRO-CTCAE). ISOQOL 2019.
    |					
    *------------------------------------------------------------------------------------------*
    | OPERATING SYSTEM COMPATIBILITY
@@ -63,22 +65,24 @@
    | Type      : 1 = Reformat PROCTCAE text responses to numeric grades
    |			 0 = Do not reformat (PROCTCAE must be numeric)
    | Purpose   : Reformat PROCTCAE text responses to numeric grades
-   | Default   : Will not reformat text responses
+   | Default   : 0 (Will not reformat text responses)
    |    
    | Name      : impute
    | Type      : 1 = Apply zero-imputation where appropriate
+   |			 0 = Will not apply zero-imputation
    | Purpose   : Fills in a '0' score for PROCTCAE_##B/C fields if that PROCTCAE_##B/C is missing and 
    |             the associated PROCTCAE_##A = 0.
-   | Default   : Will not apply zero-imputation
+   | Default   : 0 (Will not apply zero-imputation)
    |
    | Name      : composites
-   | Type      : 1 = Calculate composite scores using available PROCTCAE variables in DSN
-   | Default   : Will not calculate composite scores   
+   | Type      : 1 = Calculate composite scores using available PROCTCAE variables in DSNWill not apply zero-imputation
+   |			 0 = Will not calculate composite scores
+   | Default   : 0 (Will not calculate composite scores)   
    |
    | Name      : dsn_out 
    | Type      : SAS data set name
    | Purpose   : Creates a new data set copy of dsn with changes from macro application
-   | Default   : Output data will take original dsn name
+   | Default   : Output data will take original dsn name (i.e. overwrite original data)
    |
    *------------------------------------------------------------------------------------------*
    | RETURNED INFORMATION
