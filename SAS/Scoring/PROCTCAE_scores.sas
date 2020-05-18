@@ -1,19 +1,20 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 :	PROCTCAE_scores
+   | VERSION	 :	0.0.3 (beta)
    | SHORT DESC  :	Recodes PRO-CTCAE survey responses and calculates composite scores
    | 
    |				
    *------------------------------------------------------------------------------------------*
    | AUTHORS  	 :	Blake T Langlais, Amylou C Dueck
    *------------------------------------------------------------------------------------------*
-   | MODIFIED BY : 
+   |				
    *------------------------------------------------------------------------------------------*
    | PURPOSE	 : RECODING
    |			   	This macro takes in a SAS data set with PRO-CTCAE [1] survey text fields/responses 
    |               	and returns a SAS data set with appropriate numerical recoding. This macro 
    |               	will accept 1 or up to all 124 PRO-CTCAE survey fields. All PRO-CTCAE variable
-   |               	names MUST conform to a pre-specified naming structure. Whereby PRO-CTCAE variable
+   |               	names MUST conform to a pre-specified naming structure. PRO-CTCAE variable
    |               	names are made up of FOUR components: 1)'PROCTCAE', 2) number [1,2,3, ..., i, ..., 80], 
    |				3) 'A', 'B', or 'C' component of the i-th PRO-CTCAE field, 4) and 'SCL' (if severity,
    |               	interference, or frequency) or 'IND' (if yes/no variable). Each component
@@ -30,6 +31,10 @@
    |				[2] Ethan Basch, et al. Development of a Composite Scoring Algorithm for the 
    |					National Cancer Institute’s Patient-Reported Outcomes version of the Common 
    |					Terminology Criteria for Adverse Events (PRO-CTCAE). ISOQOL 2019.
+   |					
+   |				EXTPECTED DATA FORMAT
+   |				 Data format should be in 'long' format, where each PRO-CTCAE item is variable.
+   |					
    |					
    *------------------------------------------------------------------------------------------*
    | OPERATING SYSTEM COMPATIBILITY
