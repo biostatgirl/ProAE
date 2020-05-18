@@ -3,8 +3,7 @@
    | MACRO NAME	 :	PROCTCAE_scores
    | VERSION	 :	0.0.3 (beta)
    | SHORT DESC  :	Recodes PRO-CTCAE survey responses and calculates composite scores
-   | 
-   |				
+   | 			
    *------------------------------------------------------------------------------------------*
    | AUTHORS  	 :	Blake T Langlais, Amylou C Dueck
    *------------------------------------------------------------------------------------------*
