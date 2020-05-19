@@ -1,7 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 :	PROCTCAE_scores
-   | VERSION	 :	0.0.4 (beta)
+   | VERSION	 :	0.0.5 (beta)
    | SHORT DESC  :	Recodes PRO-CTCAE survey responses and calculates composite scores
    | 			
    *------------------------------------------------------------------------------------------*
@@ -996,8 +996,8 @@
 	/* ------------------------------ */
 	/* --- Clean up ----------------- */
 	/* ------------------------------ */
-	proc datasets noprint;
+	%exit:
+	proc datasets noprint nolist; 
 		delete ____:;
 	quit;
-	%exit:
 %mend;
