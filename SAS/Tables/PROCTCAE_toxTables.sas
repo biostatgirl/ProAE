@@ -1,6 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : PROCTCAE_toxTables
+   | VERSION	 : 0.0.2 (beta)
    | SHORT DESC  : Recodes PRO-CTCAE survey responses and calculates composite scores
    |				
    |				
@@ -15,7 +16,7 @@
    |			   are compared between/among arms using chi sqaure or Fisher's exact tests.
    |			   Risk differences between two arms are also available in lieu of statistical tests.
    |				   
-   |			   PRO-CTCAE variable names MUST conform to a pre-specified naming structure. Whereby PRO-CTCAE 
+   |			   PRO-CTCAE variable names MUST conform to a pre-specified naming structure. PRO-CTCAE 
    |			   variable names are made up of FOUR components: 1)'PROCTCAE', 2) number [1,2,3, ..., i, ..., 80], 
    |               3) 'A', 'B', or 'C' component of the i-th PRO-CTCAE field, 4) and 'SCL' (if severity,
    |               interference, or frequency) or 'IND' (if yes/no variable). Each component
@@ -471,7 +472,6 @@
 	proc freq data=____&dsn.2;
 		table &arm_var.*(&present_vars. &severe_vars.) / nocol nopercent chisq fisher riskdiff out=____ct_check;
 	run;
-	
 	/* ----------------------------------------------------------------------------- */
 	/* --- Get counts and presence rates for 0/1+ and (1,2)>3+ by arm --- */
 	/* ----------------------------------------------------------------------------- */
@@ -659,6 +659,7 @@
 				item = catx("_", scan(item_2,1,"_"), scan(item_2,2,"_"), scan(item_2,3,"_"));
 				type = scan(item_2,-1,"_");
 			run;
+			
 			/* ------------------------ */
 			/* -- Attach counts ------- */
 			/* ------------------------ */
@@ -673,6 +674,7 @@
 				by item;
 				if a and b;
 			run;
+			
 			/* ------------------------ */
 			/* -- Attach rates -------- */
 			/* ------------------------ */
@@ -698,11 +700,11 @@
 					else output;
 			run;
 			proc sql noprint;
-				select distinct(&arm_var.)
+				select distinct(tranwrd(compbl(&arm_var.), " ", "_"))
 				into : arm_n separated by " "
 				from ____ct4;
 				
-				select distinct(&arm_var.)
+				select distinct(tranwrd(compbl(&arm_var.), " ", "_"))
 				into : arm_rate separated by " "
 				from ____ct5;
 			quit;
@@ -856,29 +858,37 @@
 					drop ExactLowerCL ExactUpperCL Control row ase;
 				run;
 				proc sort data=____rd;
-					by item;
-				run;	
+					by item_2;
+				run;
 				data ____rd1;
-					merge ____rd(in=a) ____arm_item_counts(in=b);
+					merge ____rd(in=a) ____arm_item_rates(in=b);
+					by item_2;
+					if b;
+					/* -- Allow identical group frequencies to pass through with resulting risk diff of 0% in toxTable -- */
+					if risk_ci = "" then do;
+						risk_ci = "0% (0%, 0%)";
+						type = scan(item_2, -1, "_");
+						item = substr(item_2, 1, index(item_2, strip(type))-2);
+						output;
+					end;
+						else output;
+					drop Table Risk LowerCL UpperCL;
+				run;
+				proc sort data=____rd1;
+					by item;
+				run;
+				data ____rd2;
+					merge ____rd1(in=a) ____arm_item_counts(in=b);
 					by item;
 					if a and b;
-					drop Table Risk LowerCL UpperCL;
-				run;		
-				proc sort data=____rd1;
-					by item_2;
-				run;		
-				data ____rd2;
-					merge ____rd1(in=a) ____arm_item_rates(in=b);
-					by item_2;
-					if a and b;
-				run;		
+				run;
 				data ____rd_sev ____rd_pres;
 					set ____rd2;
 					if type = "present" then output ____rd_pres;
 						else if type = "severe" then output ____rd_sev;
 					keep item &arm_n. &arm_rate. risk_ci;
 				run;
-		
+				
 				/* ---------------------------- */
 				/* -- item/present: rate/risk -- */
 				/* ---------------------------- */
@@ -909,6 +919,7 @@
 					from ____rd_pres_conts
 					where substr(name, length(name)-4, 5) = "_rate";
 				quit;
+				%put "&rd_sev_renm.";
 				data ____item_sev_rd;
 					set ____item_sev_rd0 (rename = (risk_ci = risk_ci_sev &rd_sev_renm.));
 				run;
@@ -951,10 +962,10 @@
 			run;
 			proc sql noprint;
 				select name,
-					   strip(name)||" = '"||strip(substr(name, 1, length(name)-2))||"'",
+					   strip(name)||" = '"||tranwrd(strip(substr(name, 1, length(name)-2)),"_"," ")||"'",
 					   "define "||strip(name)||" / center;",
-					   strip(strip(substr(name, 1, length(name)-2)))||"_rate_pres = '"||strip(substr(name, 1, length(name)-2))||", n(%)'",
-					   strip(strip(substr(name, 1, length(name)-2)))||"_rate_sev = '"||strip(substr(name, 1, length(name)-2))||", n(%)'"
+					   strip(strip(substr(name, 1, length(name)-2)))||"_rate_pres = '"||tranwrd(strip(substr(name, 1, length(name)-2)),"_"," ")||", n(%)'",
+					   strip(strip(substr(name, 1, length(name)-2)))||"_rate_sev = '"||tranwrd(strip(substr(name, 1, length(name)-2)),"_"," ")||", n(%)'"
 				into : arm_ns separated by " ",
 					 : arm_ns_label separated by " ",
 					 : arm_ns_center separated by " ",
@@ -976,7 +987,6 @@
 				from ____table_dat_conts
 				where index(name, "_rate_sev")>0;
 			quit;
-		
 			/* ----------------------------------------------------------------------------- */
 			/* -- Output risk difference tables --- */
 			/* ----------------------------------------------------------------------------- */
@@ -1066,7 +1076,7 @@
 	/* --- Clean up ----------------- */
 	/* ------------------------------ */
 	%exit:
-/* 	proc datasets noprint; */
-/* 		delete ____: _SGSRT2_; */
-/* 	quit; */
+	proc datasets noprint;
+		delete ____: _SGSRT2_;
+	quit;
 %mend;
