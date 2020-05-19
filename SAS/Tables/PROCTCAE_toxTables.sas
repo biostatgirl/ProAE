@@ -1,7 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : PROCTCAE_toxTables
-   | VERSION	 : 0.0.2 (beta)
+   | VERSION	 : 0.0.4 (beta)
    | SHORT DESC  : Recodes PRO-CTCAE survey responses and calculates composite scores
    |				
    |				
@@ -23,6 +23,10 @@
    |               must be delimitated by an underscore (_) 
    |                  EX1: Question 1 of PRO-CTCAE should be: PROCTCAE_1A_SCL
    |                  EX2: Question 48 of PRO-CTCAE should be: PROCTCAE_48A_SCL, PROCTCAE_48B_SCL, PROCTCAE_48C_SCL
+   |					
+   |				EXTPECTED DATA FORMAT
+   |				 Data format should be in 'long' format, where each row/record/observation reflects
+   |				 a unique visit/cycle/time point for an individual and each PRO-CTCAE item is a variable/column.   
    |					
    *------------------------------------------------------------------------------------------*
    | OPERATING SYSTEM COMPATIBILITY
@@ -152,17 +156,17 @@
 		 fmt_name='frq_5_fmt' ;name='PROCTCAE_11A_SCL' ;short_label='Heartburn Frequency' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_11B_SCL' ;short_label='Heartburn Severity' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_12A_IND' ;short_label='Increased Flatulence Presence' ; output;
-		 fmt_name='frq_5_fmt' ;name='PROCTCAE_13A_SCL' ;short_label='Bloating of the Abdomen Frequency' ; output;
-		 fmt_name='sev_5_fmt' ;name='PROCTCAE_13B_SCL' ;short_label='Bloating of the Abdomen Severity' ; output;
+		 fmt_name='frq_5_fmt' ;name='PROCTCAE_13A_SCL' ;short_label='Bloating of Abdomen Frequency' ; output;
+		 fmt_name='sev_5_fmt' ;name='PROCTCAE_13B_SCL' ;short_label='Bloating of Abdomen Severity' ; output;
 		 fmt_name='frq_5_fmt' ;name='PROCTCAE_14A_SCL' ;short_label='Hiccups Frequency' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_14B_SCL' ;short_label='Hiccups Severity' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_15A_SCL' ;short_label='Constipation Severity' ; output;
 		 fmt_name='frq_5_fmt' ;name='PROCTCAE_16A_SCL' ;short_label='Diarrhea Frequency' ; output;
-		 fmt_name='frq_5_fmt' ;name='PROCTCAE_17A_SCL' ;short_label='Abdominal Pain Frequency' ; output;
-		 fmt_name='sev_5_fmt' ;name='PROCTCAE_17B_SCL' ;short_label='Abdominal Pain Severity' ; output;
-		 fmt_name='int_5_fmt' ;name='PROCTCAE_17C_SCL' ;short_label='Abdominal Pain Interference' ; output;
-		 fmt_name='frq_5_fmt' ;name='PROCTCAE_18A_SCL' ;short_label='Bowel Incontinence Frequency' ; output;
-		 fmt_name='int_5_fmt' ;name='PROCTCAE_18B_SCL' ;short_label='Bowel Incontinence Interference' ; output;
+		 fmt_name='frq_5_fmt' ;name='PROCTCAE_17A_SCL' ;short_label='Pain in Abdomen Frequency' ; output;
+		 fmt_name='sev_5_fmt' ;name='PROCTCAE_17B_SCL' ;short_label='Pain in Abdomen Severity' ; output;
+		 fmt_name='int_5_fmt' ;name='PROCTCAE_17C_SCL' ;short_label='Pain in Abdomen Interference' ; output;
+		 fmt_name='frq_5_fmt' ;name='PROCTCAE_18A_SCL' ;short_label='Loss of Bowel Control Frequency' ; output;
+		 fmt_name='int_5_fmt' ;name='PROCTCAE_18B_SCL' ;short_label='Loss of Bowel Control Interference' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_19A_SCL' ;short_label='Shortness of Breath Severity' ; output;
 		 fmt_name='int_5_fmt' ;name='PROCTCAE_19B_SCL' ;short_label='Shortness of Breath Interference' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_20A_SCL' ;short_label='Cough Severity' ; output;
@@ -171,31 +175,31 @@
 		 fmt_name='frq_5_fmt' ;name='PROCTCAE_22A_SCL' ;short_label='Arm or Leg Swelling Frequency' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_22B_SCL' ;short_label='Arm or Leg Swelling Severity' ; output;
 		 fmt_name='int_5_fmt' ;name='PROCTCAE_22C_SCL' ;short_label='Arm or Leg Swelling Interference' ; output;
-		 fmt_name='frq_5_fmt' ;name='PROCTCAE_23A_SCL' ;short_label='Racing Heartbeat Frequency' ; output;
-		 fmt_name='sev_5_fmt' ;name='PROCTCAE_23B_SCL' ;short_label='Racing Heartbeat Severity' ; output;
+		 fmt_name='frq_5_fmt' ;name='PROCTCAE_23A_SCL' ;short_label='Pounding/Racing Heartbeat Frequency' ; output;
+		 fmt_name='sev_5_fmt' ;name='PROCTCAE_23B_SCL' ;short_label='Pounding/Racing Heartbeat Severity' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_24A_IND' ;short_label='Rash Presence' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_25A_SCL' ;short_label='Dry Skin Severity' ; output;
-		 fmt_name='sev_5_fmt' ;name='PROCTCAE_26A_SCL' ;short_label='Acne Severity' ; output;
+		 fmt_name='sev_5_fmt' ;name='PROCTCAE_26A_SCL' ;short_label='Acne/Pimples Severity' ; output;
 		 fmt_name='int_5_fmt' ;name='PROCTCAE_27A_SCL' ;short_label='Hair Loss Amount' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_28A_SCL' ;short_label='Itchy Skin Severity' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_29A_IND' ;short_label='Hives Presence' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_30A_SCL' ;short_label='Hand-Foot Syndrome Severity' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_31A_IND' ;short_label='Nail Loss Presence' ; output;
-		 fmt_name='yn_2_fmt' ;name='PROCTCAE_32A_IND' ;short_label='Nail Ridges Presence' ; output;
+		 fmt_name='yn_2_fmt' ;name='PROCTCAE_32A_IND' ;short_label='Nail Ridges/Bumps Presence' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_33A_IND' ;short_label='Nail Color Change Presence' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_34A_IND' ;short_label='Sunlight Skin Sensitivity Presence' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_35A_IND' ;short_label='Bed Sores Presence' ; output;
-		 fmt_name='sev_6_fmt' ;name='PROCTCAE_36A_SCL' ;short_label='Skin Burns from Radiation Severity' ; output;
+		 fmt_name='sev_6_fmt' ;name='PROCTCAE_36A_SCL' ;short_label='Radiation Burns Severity' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_37A_IND' ;short_label='Darkening of Skin Presence' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_38A_IND' ;short_label='Stretch Marks Presence' ; output;
-		 fmt_name='sev_5_fmt' ;name='PROCTCAE_39A_SCL' ;short_label='Numbness or Tingling in Hands or Feet Severity' ; output;
-		 fmt_name='int_5_fmt' ;name='PROCTCAE_39B_SCL' ;short_label='Numbness or Tingling in Hands or Feet Interference' ; output;
+		 fmt_name='sev_5_fmt' ;name='PROCTCAE_39A_SCL' ;short_label='Numbness/Tingling in Hands/Feet Severity' ; output;
+		 fmt_name='int_5_fmt' ;name='PROCTCAE_39B_SCL' ;short_label='Numbness/Tingling in Hands/Feet Interference' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_40A_SCL' ;short_label='Dizziness Severity' ; output;
 		 fmt_name='int_5_fmt' ;name='PROCTCAE_40B_SCL' ;short_label='Dizziness Interference' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_41A_SCL' ;short_label='Blurry Vision Severity' ; output;
 		 fmt_name='int_5_fmt' ;name='PROCTCAE_41B_SCL' ;short_label='Blurry Vision Intererence' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_42A_IND' ;short_label='Flashing Lights in Eyes Presence' ; output;
-		 fmt_name='yn_2_fmt' ;name='PROCTCAE_43A_IND' ;short_label='Floaters in Eyes Presence' ; output;
+		 fmt_name='yn_2_fmt' ;name='PROCTCAE_43A_IND' ;short_label='Eye Floaters Presence' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_44A_SCL' ;short_label='Watery Eyes Severity' ; output;
 		 fmt_name='int_5_fmt' ;name='PROCTCAE_44B_SCL' ;short_label='Watery Eyes Interference' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_45A_SCL' ;short_label='Ringing in Ears Severity' ; output;
@@ -225,28 +229,28 @@
 		 fmt_name='frq_5_fmt' ;name='PROCTCAE_55A_SCL' ;short_label='Nothing Could Cheer You Up Frequency' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_55B_SCL' ;short_label='Nothing Could Cheer You Up Severity' ; output;
 		 fmt_name='int_5_fmt' ;name='PROCTCAE_55C_SCL' ;short_label='Nothing Could Cheer You Up Interference' ; output;
-		 fmt_name='frq_5_fmt' ;name='PROCTCAE_56A_SCL' ;short_label='Sadness Frequency' ; output;
-		 fmt_name='sev_5_fmt' ;name='PROCTCAE_56B_SCL' ;short_label='Sadness Severity' ; output;
-		 fmt_name='int_5_fmt' ;name='PROCTCAE_56C_SCL' ;short_label='Sadness Interference' ; output;
+		 fmt_name='frq_5_fmt' ;name='PROCTCAE_56A_SCL' ;short_label='Sad/Unhappy Feelings Frequency' ; output;
+		 fmt_name='sev_5_fmt' ;name='PROCTCAE_56B_SCL' ;short_label='Sad/Unhappy Feelings Severity' ; output;
+		 fmt_name='int_5_fmt' ;name='PROCTCAE_56C_SCL' ;short_label='Sad/Unhappy Feelings Interference' ; output;
 		 fmt_name='yn_3_fmt' ;name='PROCTCAE_57A_IND' ;short_label='Irregular Periods Presence' ; output;
 		 fmt_name='yn_3_fmt' ;name='PROCTCAE_58A_IND' ;short_label='Missed Periods Presence' ; output;
-		 fmt_name='int_5_fmt' ;name='PROCTCAE_59A_SCL' ;short_label='Vaginal Discharge Amount' ; output;
+		 fmt_name='int_5_fmt' ;name='PROCTCAE_59A_SCL' ;short_label='Unusual Vaginal Discharge Interference' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_60A_SCL' ;short_label='Vaginal Dryness Severity' ; output;
-		 fmt_name='sev_5_fmt' ;name='PROCTCAE_61A_SCL' ;short_label='Pain with Urination Severity' ; output;
-		 fmt_name='frq_5_fmt' ;name='PROCTCAE_62A_SCL' ;short_label='Urine Urgency Frequency' ; output;
-		 fmt_name='int_5_fmt' ;name='PROCTCAE_62B_SCL' ;short_label='Urine Urgency Interference' ; output;
+		 fmt_name='sev_5_fmt' ;name='PROCTCAE_61A_SCL' ;short_label='Pain/Burning with Urination Severity' ; output;
+		 fmt_name='frq_5_fmt' ;name='PROCTCAE_62A_SCL' ;short_label='Urinary Urgency Frequency' ; output;
+		 fmt_name='int_5_fmt' ;name='PROCTCAE_62B_SCL' ;short_label='Urinary Urgency Interference' ; output;
 		 fmt_name='frq_5_fmt' ;name='PROCTCAE_63A_SCL' ;short_label='Frequent Urination Frequency' ; output;
 		 fmt_name='int_5_fmt' ;name='PROCTCAE_63B_SCL' ;short_label='Frequent Urination Interference' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_64A_IND' ;short_label='Urine Color Change Presence' ; output;
-		 fmt_name='frq_5_fmt' ;name='PROCTCAE_65A_SCL' ;short_label='Urine Incontinence Frequency' ; output;
-		 fmt_name='int_5_fmt' ;name='PROCTCAE_65B_SCL' ;short_label='Urine Incontinence Interference' ; output;
+		 fmt_name='frq_5_fmt' ;name='PROCTCAE_65A_SCL' ;short_label='Loss of Urine Control Frequency' ; output;
+		 fmt_name='int_5_fmt' ;name='PROCTCAE_65B_SCL' ;short_label='Loss of Urine Control Interference' ; output;
 		 fmt_name='sev_7_fmt' ;name='PROCTCAE_66A_SCL' ;short_label='Erection Difficulty Severity' ; output;
 		 fmt_name='frq_7_fmt' ;name='PROCTCAE_67A_SCL' ;short_label='Ejaculation Problems Frequency' ; output;
 		 fmt_name='sev_7_fmt' ;name='PROCTCAE_68A_SCL' ;short_label='Decreased Sexual Interest Severity' ; output;
 		 fmt_name='yn_4_fmt' ;name='PROCTCAE_69A_IND' ;short_label='Delayed Orgasm Presence' ; output;
 		 fmt_name='yn_4_fmt' ;name='PROCTCAE_70A_IND' ;short_label='Unable to Orgasm Presence' ; output;
 		 fmt_name='sev_7_fmt' ;name='PROCTCAE_71A_SCL' ;short_label='Pain During Vaginal Sex Severity' ; output;
-		 fmt_name='sev_5_fmt' ;name='PROCTCAE_72A_SCL' ;short_label='Breast Enlargement or Tenderness Severity' ; output;
+		 fmt_name='sev_5_fmt' ;name='PROCTCAE_72A_SCL' ;short_label='Breast Enlargement/Tenderness Severity' ; output;
 		 fmt_name='yn_2_fmt' ;name='PROCTCAE_73A_IND' ;short_label='Bruising Presence' ; output;
 		 fmt_name='frq_5_fmt' ;name='PROCTCAE_74A_SCL' ;short_label='Chills Frequency' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_74B_SCL' ;short_label='Chills Severity' ; output;
@@ -1076,7 +1080,7 @@
 	/* --- Clean up ----------------- */
 	/* ------------------------------ */
 	%exit:
-	proc datasets noprint;
+	proc datasets noprint nolist;
 		delete ____: _SGSRT2_;
 	quit;
 %mend;
