@@ -1277,9 +1277,9 @@
 	/* --- Clean up ----------------- */
 	/* ------------------------------ */
 	%exit:
-/* 	proc datasets noprint; */
-/* 		delete _sgsrt2_ ____:; */
-/* 	quit; */
+	proc datasets noprint;
+		delete _sgsrt2_ ____:;
+	quit;
 %mend;
 
 
