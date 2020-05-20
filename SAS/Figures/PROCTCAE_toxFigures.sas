@@ -1,7 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : PROCTCAE_toxFigures
-   | VERSION	 : 0.0.1 (beta)
+   | VERSION	 : 0.0.2 (beta)
    | SHORT DESC  : Recodes PRO-CTCAE survey responses and calculates composite scores
    |			
    *------------------------------------------------------------------------------------------*
@@ -39,10 +39,11 @@
    | MACRO CALL
    |
    
+   	* -- Required parameters;
 	%PROCTCAE_toxFigures(dsn= , 
 						 id_var = , 
-						 arm_var = , 
 						 cycle_var = ,
+						 baseline_val = ,
 						 output_dir = );
 	
    |
@@ -95,7 +96,7 @@
    |
    | Name      : plot_limit
    | Type      : Numeric
-   | Purpose   : Limit the number of cycle to be plotted up to and including a given cycle number
+   | Purpose   : Limit the number of cycles to be plotted up to and including a given cycle number
    | Default   : All available cycle time points are plotted
    |
    | Name      : width
@@ -350,9 +351,6 @@
     /* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Defaults --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
-	%if %length(&arm_var.) = 0 %then %do;
-		%let arm_var = __ovrlarm__;
-	%end;
 	%if %length(&width.) = 0 %then %do;
 		%let width = 10;
 	%end;
@@ -384,7 +382,10 @@
 				%let text_size = 6;
 			%end;
 	%end;
-	
+		%else %do;
+			%let arm_var = __ovrlarm__;
+		%end;
+		
 	/* ----------------------------------------------------- */
 	/* --- Formats ---- */
 	/* ----------------------------------------------------- */
@@ -408,7 +409,7 @@
 		data ____cycle_frq1;
 			set ____cycle_frq0;
 			length fmt_to_txt $40;
-			fmt_to_txt = &cycle_var.||" = '"||strip("&cycle_var.")||" "||strip(&cycle_var.)||"'";
+			fmt_to_txt = &cycle_var.||" = '"||propcase(strip("&cycle_var."))||" "||strip(&cycle_var.)||"'";
 		run;
 		proc sql noprint;
 			select fmt_to_txt
@@ -489,13 +490,23 @@
 			else item = compress(scan(name, 2, "_"), "", "d"); 
 		drop fmt_name;
 	run;
-	proc contents data=____&dsn. out=____&dsn._conts0 (where=(name ^ in ("&id_var." "&arm_var." "&cycle_var.")) keep=name) noprint;
+	proc sql noprint;
+		select "'"||lowcase(strip(name))||"'"
+		into : proctcae_var_names separated by  " "
+		from ____proctcae_vars
+		/* -- Remove yes/no proctcae questions -- */
+		where index(lowcase(name), "_ind")=0;
+		
+		select "'"||lowcase(strip(name))||"'"
+		into : proctcae_comp_names separated by  " "
+		from ____proctcae_comp_vars;
+	quit;
+	proc contents data=____&dsn. 
+		out=____&dsn._conts0 (where=(lowcase(name) in (&proctcae_var_names. &proctcae_comp_names.)) keep=name) noprint;
 	run;
 	data ____&dsn._conts;
 		set ____&dsn._conts0;
 		name = lowcase(name);
-		/* -- Remove yes/no proctcae questions -- */
-		if substr(lowcase(name), length(name) - 3, 4) ^= "_ind";
 	run;	
 	proc sort data=____&dsn._conts;
 		by name;
@@ -1207,7 +1218,7 @@
 		proc sgpanel data=____together5 dattrmap=____attrs1 noautolegend;
 			where score ^= "0"
 				%if %length(&plot_limit.)^=0 %then %do;
-					and (&cycle_var. <= &plot_limit or &cycle_var. >= 11111)
+					and (&cycle_var. <= &plot_limit. or &cycle_var. >= 11111)
 				%end;;
 			label &arm_var. =
 				%if &arm_var. = __ovrlarm__ %then %do;
@@ -1266,9 +1277,9 @@
 	/* --- Clean up ----------------- */
 	/* ------------------------------ */
 	%exit:
-	proc datasets noprint;
-		delete _sgsrt2_ ____:;
-	quit;
+/* 	proc datasets noprint; */
+/* 		delete _sgsrt2_ ____:; */
+/* 	quit; */
 %mend;
 
 
