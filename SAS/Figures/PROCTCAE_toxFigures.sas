@@ -9,7 +9,7 @@
    *------------------------------------------------------------------------------------------*
    | MODIFIED BY : 
    *------------------------------------------------------------------------------------------*
-   | PURPOSE	 : This macro takes in a SAS data set with numeric PROCTC-AE survey variables 
+   | PURPOSE	 : This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
    |			   then outputs toxicity frequency distribution figures for individual and 
    |			   composite scores, at each time point as well as for the maximum post baseline
    |			   and baseline adjusted scores.
