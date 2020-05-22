@@ -1,33 +1,48 @@
 
  /*-------------------------------------------------------------------------------------------*
-   | MACRO NAME	 : PROCTCAE_toxTables
-   | VERSION	 : 0.0.4 (beta)
-   | SHORT DESC  : Recodes PRO-CTCAE survey responses and calculates composite scores
-   |				
-   |				
+   | MACRO NAME	 : 	PROCTCAE_toxTables
+   | VERSION	 : 	0.0.7 (beta)
+   | SHORT DESC  : 	Creates toxicity tables for individual and composite PRO-CTCAE survey items.
+   |
+   |
    *------------------------------------------------------------------------------------------*
-   | AUTHORS  	 : Blake T Langlais, Amylou C Dueck
+   | AUTHORS  	 :	Blake T Langlais, Amylou C Dueck
    *------------------------------------------------------------------------------------------*
    | MODIFIED BY : 
    *------------------------------------------------------------------------------------------*
-   | PURPOSE	 : This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
-   |			   then outputs an Excel data file with toxcity tables for individual and 
-   |			   composite survey items. Rates of symptomatic adverse events >0 and >= 3
-   |			   are compared between/among arms using chi sqaure or Fisher's exact tests.
-   |			   Risk differences between two arms are also available in lieu of statistical tests.
+   | PURPOSE	 : 	This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
+   |			   	then outputs an Excel data file with toxicity tables for individual survey items and 
+   |			   	composite scores. Rates of symptomatic adverse events >0 and >= 3
+   |			   	are compared between/among arms using chi sqaure or Fisher's exact tests.
+   |			   	Risk differences between two arms are also available in lieu of statistical tests.
    |				   
-   |			   PRO-CTCAE variable names MUST conform to a pre-specified naming structure. PRO-CTCAE 
-   |			   variable names are made up of FOUR components: 1)'PROCTCAE', 2) number [1,2,3, ..., i, ..., 80], 
-   |               3) 'A', 'B', or 'C' component of the i-th PRO-CTCAE field, 4) and 'SCL' (if severity,
-   |               interference, or frequency) or 'IND' (if yes/no variable). Each component
-   |               must be delimitated by an underscore (_) 
-   |                  EX1: Question 1 of PRO-CTCAE should be: PROCTCAE_1A_SCL
-   |                  EX2: Question 48 of PRO-CTCAE should be: PROCTCAE_48A_SCL, PROCTCAE_48B_SCL, PROCTCAE_48C_SCL
-   |					
+   |			   	PRO-CTCAE variable names MUST conform to a pre-specified naming structure. PRO-CTCAE 
+   |			   	variable names are made up of FOUR components: 1)'PROCTCAE', 2) number [1,2,3, ..., i, ..., 80], 
+   |               	3) 'A', 'B', or 'C' component of the i-th PRO-CTCAE field, 4) and 'SCL' (if severity,
+   |               	interference, or frequency) or 'IND' (if yes/no variable). Each component
+   |               	must be delimitated by an underscore (_) 
+   |             		EX1: Question 1 of PRO-CTCAE should be: PROCTCAE_1A_SCL
+   |             		EX2: Question 48 of PRO-CTCAE should be: PROCTCAE_48A_SCL, PROCTCAE_48B_SCL, PROCTCAE_48C_SCL
+   |			
+   |				Similarly, composite score variable names are expected to be named as 'PROCTCAE', then the
+   |				survey item number, followed by 'COMP'. Again seperated by an underscore (_).
+   |					EX1: Question 8 composite score should be named as PROCTCAE_8_COMP
+   |					EX2: Question 48 composite score should be named as PROCTCAE_48_COMP
+   |
+   |				PRO-CTCAE severity, interference, frequency items and subsequent composite scores
+   |				are used to construct these toxicity tables. Survey items with yes/no responses are not.
+   |				See available accompanying SAS macro for more on constructing composite scores (PROCTCAE_scores).
+   |
    |				EXTPECTED DATA FORMAT
    |				 Data format should be in 'long' format, where each row/record/observation reflects
    |				 a unique visit/cycle/time point for an individual and each PRO-CTCAE item is a variable/column.   
-   |					
+   |
+   |				
+   |				[-]	https://healthcaredelivery.cancer.gov/pro-ctcae/pro-ctcae_english.pdf
+   |				[-] Ethan Basch, et al. Development of a Composite Scoring Algorithm for the 
+   |					National Cancer Institute’s Patient-Reported Outcomes version of the Common 
+   |					Terminology Criteria for Adverse Events (PRO-CTCAE). ISOQOL 2019.
+	
    *------------------------------------------------------------------------------------------*
    | OPERATING SYSTEM COMPATIBILITY
    |
@@ -62,7 +77,7 @@
    | Purpose   : Field name of ID variable differentiating each PRO-CTCAE survey
    |
    | Name      : cycle_var
-   | Type      : Valid variable name
+   | Type      : Valid numeric variable name
    | Purpose   : Field name of variable differentiating one longitudinal/repeated PRO-CTCAE
    |             suvey from another, within an individual ID
    |    
@@ -88,28 +103,34 @@
    | Name      : test
    | Type      : c = chi square, f = fisher's exact
    | Purpose   : Specifies the statistical test to apply comparing rates among arms
-   | Default   : Chi square test
+   | Default   : c = Chi square test
    |
    | Name      : fmt_pvalues
-   | Type      : 1 = format p values, 0 = report p values to four digits
+   | Type      : 1 = format p values, 
+   |			 0 = report p values to four digits
    | Purpose   : Formats p values or allows user to have p values reported to four digits
    | Default   : 1 = format p values
    |
    | Name      : riskdiff
-   | Type      : 1 = Calculates risk differences between two arms 
-   | Purpose   : Calls for the risk diffrence calculations. Valid if there are only two arms in the
+   | Type      : 1 = Calculates risk differences between two arms
+   | Purpose   : Calls for the risk difference calculations. Valid if there are only two arms in the
    |			 dsn specified. This option will countermand options called with the 'test' parameter
-   | Default   : NA
+   | Default   : Risk differences are not reported
    |
    | Name      : type
    | Type      : max_post_bl = Use subjects' maximum score post baseline visit
-   |		     bl_adjusted = Use subjects' baseline adjusted score over the study period
-   | Default   : bl_adjusted
+   |		     bl_adjusted = Use subjects' baseline adjusted score over the study period.
+   |				The baseline adjusted score is derived by the following:
+   |					-	If the maximum score over the study period is more severe than the baseline score, 
+   |						then the use maximum score is used as the adjusted score. 
+   |					-	Otherwise, if the maximum score is the same or less serve than the baseline score,
+   |						then zero (0) is used as the adjusted score.
+   | Default   : bl_adjusted = Use subjects' baseline adjusted score over the study period.
    | 
    | Name      : cycle_limit
    | Type      : Numeric
-   | Purpose   : Limit the data to be analyzed up to and including a given cycle number
-   | Default   : All available cycle time points are used
+   | Purpose   : Limit the data to be analyzed up to and including a given cycle number or time point
+   | Default   : All available cycles or time points are used
    |
    *------------------------------------------------------------------------------------------*
    | ADDITIONAL NOTES
@@ -415,6 +436,7 @@
 			by &id_var.;
 			if first.&id_var. then base_score = .;
 			retain base_score;
+			__temp_score = .;
 			if &cycle_var. = &baseline_val. then base_score = &var_i.;
 				else __temp_score = &var_i.;
 		run;
@@ -1080,7 +1102,7 @@
 	/* --- Clean up ----------------- */
 	/* ------------------------------ */
 	%exit:
-	proc datasets noprint nolist;
+	proc datasets noprint;
 		delete ____: _SGSRT2_;
 	quit;
 %mend;
