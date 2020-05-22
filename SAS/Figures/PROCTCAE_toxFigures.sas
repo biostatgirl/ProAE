@@ -1,7 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : PROCTCAE_toxFigures
-   | VERSION	 : 0.0.2 (beta)
+   | VERSION	 : 0.0.3 (beta)
    | SHORT DESC  : Creates PRO-CTCAE severity frequency distribution figures for individual 
    |			   survey items and composite scores
    |			
@@ -92,8 +92,9 @@
    | OPTIONAL PARAMETERS
    |
    | Name      : arm_var
-   | Type      : Valid variable name (single)
-   | Purpose   : Field name of ID variable differentiating each PRO-CTCAE survey
+   | Type      : Valid variable name (must be a character variable)
+   | Purpose   : Field name of arm variable differentiating treatment groups
+   | Default   : Overall frequencies will be reported (if no arm/grouping variable is provided)
    |
    | Name      : display
    | Type      : present = symptom grade > 0, 
