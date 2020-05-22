@@ -2,7 +2,8 @@
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : PROCTCAE_toxFigures
    | VERSION	 : 0.0.2 (beta)
-   | SHORT DESC  : Recodes PRO-CTCAE survey responses and calculates composite scores
+   | SHORT DESC  : Creates PRO-CTCAE severity frequency distribution figures for individual 
+   |			   survey items and composite scores
    |			
    *------------------------------------------------------------------------------------------*
    | AUTHORS  	 : Blake T Langlais, Amylou C Dueck
@@ -10,21 +11,36 @@
    | MODIFIED BY : 
    *------------------------------------------------------------------------------------------*
    | PURPOSE	 : This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
-   |			   then outputs toxicity frequency distribution figures for individual and 
+   |			   then outputs severity frequency distribution figures for individual and 
    |			   composite scores, at each time point as well as for the maximum post baseline
    |			   and baseline adjusted scores.
    |				   
-   |			   PRO-CTCAE variable names MUST conform to a pre-specified naming structure. PRO-CTCAE 
-   |			   variable names are made up of FOUR components: 1)'PROCTCAE', 2) number [1,2,3, ..., i, ..., 80], 
-   |               3) 'A', 'B', or 'C' component of the i-th PRO-CTCAE field, 4) and 'SCL' (if severity,
-   |               interference, or frequency) or 'IND' (if yes/no variable). Each component
-   |               must be delimitated by an underscore (_) 
-   |                  EX1: Question 1 of PRO-CTCAE should be: PROCTCAE_1A_SCL
-   |                  EX2: Question 48 of PRO-CTCAE should be: PROCTCAE_48A_SCL, PROCTCAE_48B_SCL, PROCTCAE_48C_SCL
-   |					
+   |			   	PRO-CTCAE variable names MUST conform to a pre-specified naming structure. PRO-CTCAE 
+   |			   	variable names are made up of FOUR components: 1)'PROCTCAE', 2) number [1,2,3, ..., i, ..., 80], 
+   |               	3) 'A', 'B', or 'C' component of the i-th PRO-CTCAE field, 4) and 'SCL' (if severity,
+   |               	interference, or frequency) or 'IND' (if yes/no variable). Each component
+   |               	must be delimitated by an underscore (_) 
+   |             		EX1: Question 1 of PRO-CTCAE should be: PROCTCAE_1A_SCL
+   |             		EX2: Question 48 of PRO-CTCAE should be: PROCTCAE_48A_SCL, PROCTCAE_48B_SCL, PROCTCAE_48C_SCL
+   |			
+   |				Similarly, composite score variable names are expected to be named as 'PROCTCAE', then the
+   |				survey item number, followed by 'COMP'. Again seperated by an underscore (_).
+   |					EX1: Question 8 composite score should be named as PROCTCAE_8_COMP
+   |					EX2: Question 48 composite score should be named as PROCTCAE_48_COMP
+   |
+   |				PRO-CTCAE severity, interference, frequency items and subsequent composite scores
+   |				are used to construct these figures. Survey items with yes/no responses are not.
+   |				See available accompanying SAS macro for more on constructing composite scores (PROCTCAE_scores).
+   |
    |				EXTPECTED DATA FORMAT
    |				 Data format should be in 'long' format, where each row/record/observation reflects
    |				 a unique visit/cycle/time point for an individual and each PRO-CTCAE item is a variable/column.   
+   |
+   |				
+   |				[-]	https://healthcaredelivery.cancer.gov/pro-ctcae/pro-ctcae_english.pdf
+   |				[-] Ethan Basch, et al. Development of a Composite Scoring Algorithm for the 
+   |					National Cancer Institute’s Patient-Reported Outcomes version of the Common 
+   |					Terminology Criteria for Adverse Events (PRO-CTCAE). ISOQOL 2019.
    |					
    *------------------------------------------------------------------------------------------*
    | OPERATING SYSTEM COMPATIBILITY
@@ -80,7 +96,8 @@
    | Purpose   : Field name of ID variable differentiating each PRO-CTCAE survey
    |
    | Name      : display
-   | Type      : present = symptom grade > 0, severe = symptom >= 3 
+   | Type      : present = symptom grade > 0, 
+   				 severe = symptom >= 3 
    | Purpose   : Display group symptom frequencies of subjects with grades > 0 (present), or >= 3 (severe)
    | Default   : present = symptom grade > 0
    |
@@ -106,7 +123,7 @@
    |
    | Name      : height
    | Type      : Numeric
-   | Purpose   : Specify the figure width in inches
+   | Purpose   : Specify the figure height in inches
    | Default   : 10
    |
    | Name      : label
@@ -119,7 +136,12 @@
    | Type      : 1 = Add '%' to values when percent labels are called, 0 = do not add '%'
    | Purpose   : When y-axis percent labels are called, allow user to add '%' to the value label
    | Default   : 1 = Add '%'
-   |    
+   |
+   | Name      : x_label
+   | Type      : Character string (unquoted)
+   | Purpose   : Label for the x axis of the plot
+   | Default   : "Randomized Treatment Assignment" will be added if there are 2 or more arms
+   |			 "Overall" will be added if no arm variable is specified 
    *------------------------------------------------------------------------------------------*
    | ADDITIONAL NOTES
    |
@@ -138,7 +160,7 @@
 
 
 %macro PROCTCAE_toxFigures(dsn, output_dir, id_var, arm_var, cycle_var, cycle_limit, cycle_fmt, baseline_val,
-							plot_limit, height, width, display, label, percent_label);
+							plot_limit, height, width, display, label, percent_label, x_label);
 	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Reference data sets --- */
@@ -366,7 +388,6 @@
 	%if %length(&label.) = 0 %then %do;
 		%let label = "";
 	%end;
-	
 	%let text_size = 8;
 	%let arm_count = 1;
 	%if %length(&arm_var.) ^= 0 %then %do;
@@ -385,6 +406,15 @@
 		%else %do;
 			%let arm_var = __ovrlarm__;
 		%end;
+		
+	%if %length(&x_label.) = 0 %then %do;
+		%if &arm_var. = __ovrlarm__ %then %do;
+			%let x_label =Overall;
+		%end;
+			%else %do;
+				%let x_label =Randomized Treatment Assignment;
+			%end;
+	%end;
 		
 	/* ----------------------------------------------------- */
 	/* --- Formats ---- */
@@ -1222,10 +1252,10 @@
 				%end;;
 			label &arm_var. =
 				%if &arm_var. = __ovrlarm__ %then %do;
-					"Overall Group"
+					"&x_label."
 				%end;
 					%else %do;
-						"Randomized Treatment Assignment"
+						"&x_label."
 					%end;;
 			format &cycle_var. _cyclefmt_. name $fsi_fmt.;
 			panelby &cycle_var. name / layout = lattice novarname onepanel sort=data 
