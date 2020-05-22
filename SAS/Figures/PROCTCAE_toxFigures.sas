@@ -1,7 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : PROCTCAE_toxFigures
-   | VERSION	 : 0.0.3 (beta)
+   | VERSION	 : 0.0.4 (beta)
    | SHORT DESC  : Creates PRO-CTCAE severity frequency distribution figures for individual 
    |			   survey items and composite scores
    |			
@@ -486,6 +486,9 @@
 		%if &arm_var. = __ovrlarm__ %then %do;
 			&arm_var. = "Overall";
 		%end;
+			%else %do;
+				if &arm_var. ^="";
+			%end;
 		format &cycle_var. _cyclefmt_.;
 	run;
 
