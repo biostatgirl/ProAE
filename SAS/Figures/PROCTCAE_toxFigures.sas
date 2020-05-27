@@ -130,7 +130,8 @@
    | Name      : label
    | Type      : n = arm sample size within each cycle/PROCTC-AE item combination
    |			 percent = percent shown on the y-axis
-   | Purpose   : Label frequency bars with sample size (n) or y-axis percent
+   | Purpose   : Label frequency bars with sample size (n) or y-axis percentage, corresponding to 
+   |			 the 'display' parameter (symptom grade > 0, symptom >= 3)
    | Default   : No labels
    |
    | Name      : percent_label
