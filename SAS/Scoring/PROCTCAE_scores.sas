@@ -1,7 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 :	PROCTCAE_scores
-   | VERSION	 :	0.0.5 (beta)
+   | VERSION	 :	0.0.6 (beta)
    | SHORT DESC  :	Recodes PRO-CTCAE survey responses and calculates composite scores
    | 			
    *------------------------------------------------------------------------------------------*
@@ -688,7 +688,7 @@
 			array int_5_old(*) &old_int_5_vars.;
 			do ____i=1 to dim(int_5);
 				%if &reformat. = 1 %then %do;
-					int_5(____i) = input(upcase(int_5_old(____i)), int_5_fmt.);
+					int_5(____i) = input(upcase(strip(int_5_old(____i))), int_5_fmt.);
 				%end;
 					%else %if &reformat. ^= 1 %then %do;
 				 		int_5(____i) = int_5_old(____i);
@@ -700,7 +700,7 @@
 			array sev_5_old(*) &old_sev_5_vars.;
 			do ____i=1 to dim(sev_5);
 				%if &reformat. = 1 %then %do;
-					sev_5(____i) = input(upcase(sev_5_old(____i)), sev_5_fmt.);
+					sev_5(____i) = input(upcase(strip(sev_5_old(____i))), sev_5_fmt.);
 				%end;
 					%else %if &reformat. ^= 1 %then %do;
 				 		sev_5(____i) = sev_5_old(____i);
@@ -712,7 +712,7 @@
 			array sev_6_old(*) &old_sev_6_vars.;
 			do ____i=1 to dim(sev_6);
 				%if &reformat. = 1 %then %do;
-					sev_6(____i) = input(upcase(sev_6_old(____i)), sev_6_fmt.);
+					sev_6(____i) = input(upcase(strip(sev_6_old(____i))), sev_6_fmt.);
 				%end;
 					%else %if &reformat. ^= 1 %then %do;
 				 		sev_6(____i) = sev_6_old(____i);
@@ -724,7 +724,7 @@
 			array sev_7_old(*) &old_sev_7_vars.;
 			do ____i=1 to dim(sev_7);
 				%if &reformat. = 1 %then %do;
-					sev_7(____i) = input(upcase(sev_7_old(____i)), sev_7_fmt.);
+					sev_7(____i) = input(upcase(strip(sev_7_old(____i))), sev_7_fmt.);
 				%end;
 					%else %if &reformat. ^= 1 %then %do;
 				 		sev_7(____i) = sev_7_old(____i);
@@ -736,7 +736,7 @@
 			array frq_5_old(*) &old_frq_5_vars.;
 			do ____i=1 to dim(frq_5);
 				%if &reformat. = 1 %then %do;				
-					frq_5(____i) = input(upcase(frq_5_old(____i)), frq_5_fmt.);
+					frq_5(____i) = input(upcase(strip(frq_5_old(____i))), frq_5_fmt.);
 				%end;
 					%else %if &reformat. ^= 1 %then %do;
 				 		frq_5(____i) = frq_5_old(____i);
@@ -748,7 +748,7 @@
 			array frq_7_old(*) &old_frq_7_vars.;
 			do ____i=1 to dim(frq_7);
 				%if &reformat. = 1 %then %do;				
-					frq_7(____i) = input(upcase(frq_7_old(____i)), frq_7_fmt.);
+					frq_7(____i) = input(upcase(strip(frq_7_old(____i))), frq_7_fmt.);
 				%end;
 					%else %if &reformat. ^= 1 %then %do;
 				 		frq_7(____i) = frq_7_old(____i);
@@ -760,7 +760,7 @@
 			array yn_2_old(*) &old_yn_2_vars.;
 			do ____i=1 to dim(yn_2);
 				%if &reformat. = 1 %then %do;				
-					yn_2(____i) = input(upcase(yn_2_old(____i)), yn_2_fmt.);
+					yn_2(____i) = input(upcase(strip(yn_2_old(____i))), yn_2_fmt.);
 				%end;
 					%else %if &reformat. ^= 1 %then %do;
 				 		yn_2(____i) = yn_2_old(____i);
@@ -772,7 +772,7 @@
 			array yn_3_old(*) &old_yn_3_vars.;
 			do ____i=1 to dim(yn_3);
 				%if &reformat. = 1 %then %do;				
-					yn_3(____i) = input(upcase(yn_3_old(____i)), yn_3_fmt.);
+					yn_3(____i) = input(upcase(strip(yn_3_old(____i))), yn_3_fmt.);
 				%end;
 					%else %if &reformat. ^= 1 %then %do;
 				 		yn_3(____i) = yn_3_old(____i);
@@ -784,7 +784,7 @@
 			array yn_4_old(*) &old_yn_4_vars.;
 			do ____i=1 to dim(yn_4);
 				%if &reformat. = 1 %then %do;				
-					yn_4(____i) = input(upcase(yn_4_old(____i)), yn_4_fmt.);
+					yn_4(____i) = input(upcase(strip(yn_4_old(____i))), yn_4_fmt.);
 				%end;
 					%else %if &reformat. ^= 1 %then %do;
 				 		yn_4(____i) = yn_4_old(____i);
