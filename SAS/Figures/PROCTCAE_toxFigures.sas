@@ -1,19 +1,20 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : PROCTCAE_toxFigures
-   | VERSION	 : 0.0.4 (beta)
+   | VERSION	 : 1.0.0
    | SHORT DESC  : Creates PRO-CTCAE severity frequency distribution figures for individual 
    |			   survey items and composite scores
    |			
    *------------------------------------------------------------------------------------------*
    | AUTHORS  	 : Blake T Langlais, Amylou C Dueck
    *------------------------------------------------------------------------------------------*
-   | MODIFIED BY : 
+   | 
    *------------------------------------------------------------------------------------------*
    | PURPOSE	 : This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
-   |			   then outputs severity frequency distribution figures for individual and 
+   |			   then create severity frequency distribution figures for individual and 
    |			   composite scores, at each time point as well as for the maximum post baseline
-   |			   and baseline adjusted scores.
+   |			   and baseline adjusted scores. These figures can be outputted as individual JPEG 
+   |			   image files to a user-specified directory.
    |				   
    |			   	PRO-CTCAE variable names MUST conform to a pre-specified naming structure. PRO-CTCAE 
    |			   	variable names are made up of FOUR components: 1)'PROCTCAE', 2) number [1,2,3, ..., i, ..., 80], 
@@ -59,8 +60,7 @@
 	%PROCTCAE_toxFigures(dsn= , 
 						 id_var = , 
 						 cycle_var = ,
-						 baseline_val = ,
-						 output_dir = );
+						 baseline_val = );
 	
    |
    *------------------------------------------------------------------------------------------*
@@ -71,22 +71,19 @@
    | Purpose   : Data set with PRO-CTCAE items and row ID (with optional cycle and arm fields)
    |
    | Name      : id_var
-   | Type      : Valid variable name (single)
+   | Type      : Valid variable name
    | Purpose   : Field name of ID variable differentiating each PRO-CTCAE survey
    |
    | Name      : cycle_var
-   | Type      : Valid variable name (single, must be numeric)
-   | Purpose   : Field name of variable differentiating one longitudinal/repeated PRO-CTCAE
-   |             suvey from another, within an individual ID
-   |    
-   | Name      : output_dir
-   | Type      : Valid directory to the output folder of choice
-   | Purpose   : This is the directory location where Excel files will be output
+   | Type      : Valid variable name (must be numeric vaiable)
+   | Purpose   : Variable differentiating one longitudinal/repeated PRO-CTCAE survey
+   |             from another, within an individual ID. Figure labeling will inherit
+   |			 the variable's formating.
    |    
    | Name      : baseline_val
-   | Type      : Numerical value for baseline cycle/time
+   | Type      : Numerical value of baseline cycle/time point within the cycle_var variable
    | Purpose   : This is the value indicating an individual's baseline (or first) time 
-   |			 point (e.g. cycle 1, time 0, visit 1) 
+   |			 point (e.g. time 0, cycle 1, visit 1, would be 0, 1, 1, respectively) 
    |  
    *------------------------------------------------------------------------------------------*
    | OPTIONAL PARAMETERS
@@ -95,12 +92,6 @@
    | Type      : Valid variable name (must be a character variable)
    | Purpose   : Field name of arm variable differentiating treatment groups
    | Default   : Overall frequencies will be reported (if no arm/grouping variable is provided)
-   |
-   | Name      : display
-   | Type      : present = symptom grade > 0, 
-   				 severe = symptom >= 3 
-   | Purpose   : Display group symptom frequencies of subjects with grades > 0 (present), or >= 3 (severe)
-   | Default   : present = symptom grade > 0
    |
    | Name      : cycle_fmt
    | Type      : Valid SAS format name (single)
@@ -117,33 +108,71 @@
    | Purpose   : Limit the number of cycles to be plotted up to and including a given cycle number
    | Default   : All available cycle time points are plotted
    |
-   | Name      : width
-   | Type      : Numeric
-   | Purpose   : Specify the figure width in inches
-   | Default   : 6.2
-   |
    | Name      : height
    | Type      : Numeric
    | Purpose   : Specify the figure height in inches
+   | Default   : 6.2
+   |
+   | Name      : width
+   | Type      : Numeric
+   | Purpose   : Specify the figure width in inches
    | Default   : 10
    |
    | Name      : label
-   | Type      : n = arm sample size within each cycle/PROCTC-AE item combination
-   |			 percent = percent shown on the y-axis
-   | Purpose   : Label frequency bars with sample size (n) or y-axis percentage, corresponding to 
-   |			 the 'display' parameter (symptom grade > 0, symptom >= 3)
-   | Default   : No labels
-   |
-   | Name      : percent_label
-   | Type      : 1 = Add '%' to values when percent labels are called, 0 = do not add '%'
-   | Purpose   : When y-axis percent labels are called, allow user to add '%' to the value label
-   | Default   : 1 = Add '%'
+   | Type      : 0 = no frequency bar labels
+   |			 1 = sample size (n) within each cycle (symptom grade 0 or higher)
+   |			 2 = sample size (n) within each cycle with present symptoms (symptom grade > 0)
+   |			 3 = sample size (n) within each cycle with severe symptoms (symptom grade >= 3)
+   |			 4 = percent of subjects (%) within each cycle with present symptoms (symptom grade > 0)
+   |			 5 = percent of subjects (%) within each cycle with severe symptoms (symptom grade >= 3)
+   |			 percent = percent shown on the y-axis (either )
+   | Purpose   : Label frequency bars with sample size (n) or y-axis percentage
+   | Default   : 0 = no bar labels
    |
    | Name      : x_label
    | Type      : Character string (unquoted)
    | Purpose   : Label for the x axis of the plot
    | Default   : "Randomized Treatment Assignment" will be added if there are 2 or more arms
    |			 "Overall" will be added if no arm variable is specified 
+   |
+   | Name      : summary_only
+   | Type      : 1 = Only display the summary measures in plots, 0 = show longitudinal time points
+   | Purpose   : Surpress the individual time points from plotting. Setting summary_only=1 will 
+   |			 countermand plot_limit. If summary_only=1, consider resizing the width of the figures
+   |			 to a width 6 or above or adjust footnote_size to accommodate the footnotes.
+   | Default   : 0 = show longitudinal time points 
+   |
+   | Name      : footnote_size
+   | Type      : Numeric
+   | Purpose   : Specify the footnote font size in points
+   | Default   : 9
+   |    
+   | Name      : output_dir
+   | Type      : Valid directory to the output folder of choice
+   | Purpose   : This is the directory location where JPEG figures will be output
+   | Default   : No output is created
+   |
+   | Name      : dpi
+   | Type      : Interger
+   | Purpose   : DPI (dots per inch): increase/decrease image resolution for use with output_dir 
+   | Default   : 300
+   |
+   | Name      : zero_display
+   | Type      : 1 = Display grade 0 frequency boxes within plots, 0 = do not display
+   | Purpose   : Displays grade 0 counts
+   | Default   : 1
+   |
+   | Name      : PROCTCAE_table
+   | Type      : 1 = Create PRO-CTCAE variable/label reference table, 0 = do not create table
+   | Purpose   : Creates a SAS dataset named 'PROCTCAE_table' listing all PRO-CTCAE variable names
+   |			 and respective short lables 
+   | Default   : 0 = do not create table
+   |
+   | Name      : debug
+   | Type      : 1 = Print notes and macro values and logic for debugging, 0 = no debugging
+   | Purpose   : Used for debugging unexpected results
+   | Default   : 0 = no debugging
+   |
    *------------------------------------------------------------------------------------------*
    | ADDITIONAL NOTES
    |
@@ -152,18 +181,39 @@
    |
    *------------------------------------------------------------------------------------------*
    |
+   | This program is free software; you can redistribute it and/or
+   | modify it under the terms of the GNU General Public License as
+   | published by the Free Software Foundation; either version 3 of
+   | the License, or (at your option) any later version.
+   |
    | This program is distributed in the hope that it will be useful,
    | but WITHOUT ANY WARRANTY; without even the implied warranty of
    | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
    | General Public License for more details.
    *------------------------------------------------------------------------------------------*/
 
-
-
-
-%macro PROCTCAE_toxFigures(dsn, output_dir, id_var, arm_var, cycle_var, cycle_limit, cycle_fmt, baseline_val,
-							plot_limit, height, width, display, label, percent_label, x_label);
+%macro PROCTCAE_toxFigures(dsn, id_var, arm_var, cycle_var, cycle_limit, cycle_fmt, baseline_val, summary_only, plot_limit, 
+						   height, width, label, x_label,footnote_size, output_dir, dpi, debug, zero_display, proctcae_table, 
+						   coldat, colors);
 	
+	/* ---------------------------------------------------------------------------------------------------- */	
+	/* --- Allowance for debugging --- */
+	/* ---------------------------------------------------------------------------------------------------- */	
+	%let user_notes = %sysfunc(getoption(notes));
+	%let user_mprint = %sysfunc(getoption(mprint));
+	%let user_symbolgen = %sysfunc(getoption(symbolgen));
+	%let user_mlogic = %sysfunc(getoption(mlogic));
+	%let user_mlogicnest = %sysfunc(getoption(mlogicnest));
+	%if %length(&dsn.)=0 %then %do;
+		%let debug=0;
+	%end;
+	%if &debug.=1 %then %do;
+		options notes mprint symbolgen mlogic mlogicnest;
+	%end;
+		%else %do;
+			options nonotes nomprint nosymbolgen nomlogic nomlogicnest;
+		%end;
+ 
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Reference data sets --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
@@ -294,46 +344,10 @@
 		 fmt_name='yn_3_fmt' ;name='PROCTCAE_79A_IND' ;short_label='Injection Site Reaction Presence' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_80A_SCL' ;short_label='Body Odor Severity' ; output;
 	 run;
-	 data ____attrs1;
-		length fillcolor $5 id $5 linecolor $5 value $18;
-		fillcolor='VLIGB' ;id='level' ;linecolor='VLIGB' ;value='MILD' ; output;
-		fillcolor='BIGB' ;id='level' ;linecolor='BIGB' ;value='MODERATE' ; output;
-		fillcolor='VIGB' ;id='level' ;linecolor='VIGB' ;value='SEVERE' ; output;
-		fillcolor='DEGB' ;id='level' ;linecolor='DEGB' ;value='VERY SEVERE' ; output;
-		fillcolor='VLIGB' ;id='level' ;linecolor='VLIGB' ;value='RARELY' ; output;
-		fillcolor='BIGB' ;id='level' ;linecolor='BIGB' ;value='OCCASIONALLY' ; output;
-		fillcolor='VIGB' ;id='level' ;linecolor='VIGB' ;value='FREQUENTLY' ; output;
-		fillcolor='DEGB' ;id='level' ;linecolor='DEGB' ;value='ALMOST CONSTANTLY' ; output;
-		fillcolor='VLIGB' ;id='level' ;linecolor='VLIGB' ;value='A LITTLE BIT' ; output;
-		fillcolor='BIGB' ;id='level' ;linecolor='BIGB' ;value='SOMEWHAT' ; output;
-		fillcolor='VIGB' ;id='level' ;linecolor='VIGB' ;value='QUITE A BIT' ; output;
-		fillcolor='DEGB' ;id='level' ;linecolor='DEGB' ;value='VERY MUCH' ; output;
-		fillcolor='PAPK' ;id='level' ;linecolor='PAPK' ;value='1' ; output;
-		fillcolor='STPK' ;id='level' ;linecolor='STPK' ;value='2' ; output;
-		fillcolor='DEPK' ;id='level' ;linecolor='DEPK' ;value='3' ; output;
-	run;
 
-/* 	 data ____attrs1; */
-/* 		length fillcolor $5 id $5 linecolor $5 value $18; */
-/* 		fillcolor='VLIGB' ;id='level' ;linecolor='VLIGB' ;value='MILD' ; output; */
-/* 		fillcolor='BIGB' ;id='level' ;linecolor='BIGB' ;value='MODERATE' ; output; */
-/* 		fillcolor='VIGB' ;id='level' ;linecolor='VIGB' ;value='SEVERE' ; output; */
-/* 		fillcolor='DEGB' ;id='level' ;linecolor='DEGB' ;value='VERY SEVERE' ; output; */
-/* 		fillcolor='VLIGB' ;id='level' ;linecolor='VLIGB' ;value='RARELY' ; output; */
-/* 		fillcolor='BIGB' ;id='level' ;linecolor='BIGB' ;value='OCCASIONALLY' ; output; */
-/* 		fillcolor='VIGB' ;id='level' ;linecolor='VIGB' ;value='FREQUENTLY' ; output; */
-/* 		fillcolor='DEGB' ;id='level' ;linecolor='DEGB' ;value='ALMOST CONSTANTLY' ; output; */
-/* 		fillcolor='VLIGB' ;id='level' ;linecolor='VLIGB' ;value='A LITTLE BIT' ; output; */
-/* 		fillcolor='BIGB' ;id='level' ;linecolor='BIGB' ;value='SOMEWHAT' ; output; */
-/* 		fillcolor='VIGB' ;id='level' ;linecolor='VIGB' ;value='QUITE A BIT' ; output; */
-/* 		fillcolor='DEGB' ;id='level' ;linecolor='DEGB' ;value='VERY MUCH' ; output; */
-/* 		fillcolor='PAPK' ;id='level' ;linecolor='PAPK' ;value='1' ; output; */
-/* 		fillcolor='STPK' ;id='level' ;linecolor='STPK' ;value='2' ; output; */
-/* 		fillcolor='DEPK' ;id='level' ;linecolor='DEPK' ;value='3' ; output; */
-/* 	run; */
 
  	/* ---------------------------------------------------------------------------------------------------- */	
-	/* --- Error checks --- */
+	/* --- Error checks (1 of 2) --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
 	%if %length(&dsn.)=0 %then %do;
 		data _null_;
@@ -365,30 +379,57 @@
 		run;
     	%goto exit;
     %end;
-	%if %length(&output_dir.)=0 %then %do;
+    proc contents data=&dsn. out=____conts noprint;
+	run; 
+	proc sql noprint;
+		select "'"||strip(upcase(name))||"'"
+		into : dsn_pro_vars separated by " "
+		from ____conts;
+	quit;
+	%let no_pro_vars=;
+	data _null_;
+		set ____proctcae_vars;
+		if name in (&dsn_pro_vars.) then do;
+			call symput("no_pro_vars", 1);
+			stop;
+		end;
+	run;
+	%if %length(&no_pro_vars.)=0 %then %do;
 		data _null_;
-			put "ER" "ROR: No output directory provided.";
+			put "ER" "ROR: No PRO-CTCAE variables found in &dsn. fitting this macro's required format.";
 		run;
     	%goto exit;
     %end;
-    
-    /* ---------------------------------------------------------------------------------------------------- */	
+
+	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Defaults --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
+	%if &summary_only. = 1 and %length(&width.) = 0 %then %do;
+		%let width = 5.8;
+	%end;
 	%if %length(&width.) = 0 %then %do;
 		%let width = 10;
 	%end;
 	%if %length(&height.) = 0 %then %do;
 		%let height = 6.4;
 	%end;
-	%if %length(&percent_label.) = 0 %then %do;
-		%let percent_label = 1;
-	%end;
-	%if %length(&display.) = 0 %then %do;
-		%let display = present;
-	%end;
 	%if %length(&label.) = 0 %then %do;
-		%let label = "";
+		%let label = 0;
+	%end;
+	%if %length(&dpi.) = 0 %then %do;
+		%let dpi = 300;
+	%end;
+	%if %length(&footnote_size.) = 0 %then %do;
+		%let footnote_size = 9;
+	%end;
+	%if %length(&zero_display.) = 0 %then %do;
+		%let zero_display = 1;
+	%end;
+	%if %length(&proctcae_table.) = 0 %then %do;
+		%let proctcae_table = 0;
+	%end;
+	%if %length(&colors.) = 0 %then %do;
+		%let colors = 1;
 	%end;
 	%let text_size = 8;
 	%let arm_count = 1;
@@ -492,7 +533,100 @@
 			%end;
 		format &cycle_var. _cyclefmt_.;
 	run;
+	%if &proctcae_table.=1 %then %do;
+		data PROCTCAE_table;
+			set ____proctcae_vars (drop=fmt_name);
+		run;
+	%end;
+	
+	%if &colors.=1 %then %do;
+	 	data ____attrs1;
+			length fillcolor $10 id $5 linecolor $10 value $18;
+			fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='NONE' ; output;
+			fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='NEVER' ; output;
+			fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='NOT AT ALL' ; output;
+			fillcolor='VLIGB' ;id='level' ;linecolor='VLIGB' ;value='MILD' ; output;
+			fillcolor='BIGB' ;id='level' ;linecolor='BIGB' ;value='MODERATE' ; output;
+			fillcolor='VIGB' ;id='level' ;linecolor='VIGB' ;value='SEVERE' ; output;
+			fillcolor='DEGB' ;id='level' ;linecolor='DEGB' ;value='VERY SEVERE' ; output;
+			fillcolor='VLIGB' ;id='level' ;linecolor='VLIGB' ;value='RARELY' ; output;
+			fillcolor='BIGB' ;id='level' ;linecolor='BIGB' ;value='OCCASIONALLY' ; output;
+			fillcolor='VIGB' ;id='level' ;linecolor='VIGB' ;value='FREQUENTLY' ; output;
+			fillcolor='DEGB' ;id='level' ;linecolor='DEGB' ;value='ALMOST CONSTANTLY' ; output;
+			fillcolor='VLIGB' ;id='level' ;linecolor='VLIGB' ;value='A LITTLE BIT' ; output;
+			fillcolor='BIGB' ;id='level' ;linecolor='BIGB' ;value='SOMEWHAT' ; output;
+			fillcolor='VIGB' ;id='level' ;linecolor='VIGB' ;value='QUITE A BIT' ; output;
+			fillcolor='DEGB' ;id='level' ;linecolor='DEGB' ;value='VERY MUCH' ; output;
+			fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='0' ; output;
+			fillcolor='PAPK' ;id='level' ;linecolor='PAPK' ;value='1' ; output;
+			fillcolor='STPK' ;id='level' ;linecolor='STPK' ;value='2' ; output;
+			fillcolor='DEPK' ;id='level' ;linecolor='DEPK' ;value='3' ; output;
+		run;
+	%end;
+		%else %if &colors.=2 %then %do;
+			data ____attrs1;
+				length fillcolor $10 id $5 linecolor $10 value $18;
+				fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='NONE' ; output;
+				fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='NEVER' ; output;
+				fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='NOT AT ALL' ; output;
+				fillcolor='CX0571B0' ;id='level' ;linecolor='CX0571B0' ;value='MILD' ; output;
+				fillcolor='CX92C5DE' ;id='level' ;linecolor='CX92C5DE' ;value='MODERATE' ; output;
+				fillcolor='CXF4A582' ;id='level' ;linecolor='CXF4A582' ;value='SEVERE' ; output;
+				fillcolor='CXCA0020' ;id='level' ;linecolor='CXCA0020' ;value='VERY SEVERE' ; output;
+				fillcolor='CX0571B0' ;id='level' ;linecolor='CX0571B0' ;value='RARELY' ; output;
+				fillcolor='CX92C5DE' ;id='level' ;linecolor='CX92C5DE' ;value='OCCASIONALLY' ; output;
+				fillcolor='CXF4A582' ;id='level' ;linecolor='CXF4A582' ;value='FREQUENTLY' ; output;
+				fillcolor='CXCA0020' ;id='level' ;linecolor='CXCA0020' ;value='ALMOST CONSTANTLY' ; output;
+				fillcolor='CX0571B0' ;id='level' ;linecolor='CX0571B0' ;value='A LITTLE BIT' ; output;
+				fillcolor='CX92C5DE' ;id='level' ;linecolor='CX92C5DE' ;value='SOMEWHAT' ; output;
+				fillcolor='CXF4A582' ;id='level' ;linecolor='CXF4A582' ;value='QUITE A BIT' ; output;
+				fillcolor='CXCA0020' ;id='level' ;linecolor='CXCA0020' ;value='VERY MUCH' ; output;
+				fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='0' ; output;
+				fillcolor='CXA6DBA0' ;id='level' ;linecolor='CXA6DBA0' ;value='1' ; output;
+				fillcolor='CXC2A5CF' ;id='level' ;linecolor='CXC2A5CF' ;value='2' ; output;
+				fillcolor='CX7B3294' ;id='level' ;linecolor='CX7B3294' ;value='3' ; output;
+			run;
+		%end;
+		%else %if &colors.=3 %then %do;
+			data ____attrs1;
+				length fillcolor $10 id $5 linecolor $10 value $18;
+				fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='NONE' ; output;
+				fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='NEVER' ; output;
+				fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='NOT AT ALL' ; output;
+				fillcolor='CXE6E6E6' ;id='level' ;linecolor='CXBDBDBD' ;value='MILD' ; output;
+				fillcolor='CXBDBDBD' ;id='level' ;linecolor='CXBDBDBD' ;value='MODERATE' ; output;
+				fillcolor='CX636363' ;id='level' ;linecolor='CX636363' ;value='SEVERE' ; output;
+				fillcolor='CX000000' ;id='level' ;linecolor='CX000000' ;value='VERY SEVERE' ; output;
+				fillcolor='CXE6E6E6' ;id='level' ;linecolor='CXBDBDBD' ;value='RARELY' ; output;
+				fillcolor='CXBDBDBD' ;id='level' ;linecolor='CXBDBDBD' ;value='OCCASIONALLY' ; output;
+				fillcolor='CX636363' ;id='level' ;linecolor='CX636363' ;value='FREQUENTLY' ; output;
+				fillcolor='CX000000' ;id='level' ;linecolor='CX000000' ;value='ALMOST CONSTANTLY' ; output;
+				fillcolor='CXE6E6E6' ;id='level' ;linecolor='CXBDBDBD' ;value='A LITTLE BIT' ; output;
+				fillcolor='CXBDBDBD' ;id='level' ;linecolor='CXBDBDBD' ;value='SOMEWHAT' ; output;
+				fillcolor='CX636363' ;id='level' ;linecolor='CX636363' ;value='QUITE A BIT' ; output;
+				fillcolor='CX000000' ;id='level' ;linecolor='CX000000' ;value='VERY MUCH' ; output;
+				fillcolor='WHITE' ;id='level' ;linecolor='CXBDBDBD' ;value='0' ; output;
+				fillcolor='CXBDBDBD' ;id='level' ;linecolor='CXBDBDBD' ;value='1' ; output;
+				fillcolor='CX636363' ;id='level' ;linecolor='CX636363' ;value='2' ; output;
+				fillcolor='CX000000' ;id='level' ;linecolor='CX000000' ;value='3' ; output;
+			run;
+		%end;
+	
+	%if %length(&coldat.) ^= 0 %then %do;
+		data ____attrs1;
+			set &coldat.;
+		run;
+	%end;
+	
+	%if &zero_display.=0 %then %do;
+	 	data ____attrs1;
+			set ____attrs1;
+			if value in ("NONE", "NEVER", "NOT AT ALL", "0") then linecolor = "WHITE";
+		run;
+ 	%end;
+	
 
+	 
 	/* ----------------------------------------------------- */
 	/* --- Iterate through vars within dsn ---- */
 	/* ----------------------------------------------------- */
@@ -536,13 +670,10 @@
 		into : proctcae_comp_names separated by  " "
 		from ____proctcae_comp_vars;
 	quit;
-	proc contents data=____&dsn. 
-		out=____&dsn._conts0 (where=(lowcase(name) in (&proctcae_var_names. &proctcae_comp_names.)) keep=name) noprint;
-	run;
 	data ____&dsn._conts;
-		set ____&dsn._conts0;
+		set ____conts (where=(lowcase(name) in (&proctcae_var_names. &proctcae_comp_names.)) keep=name);
 		name = lowcase(name);
-	run;	
+	run;
 	proc sort data=____&dsn._conts;
 		by name;
 	run;
@@ -573,6 +704,86 @@
 		rank + 1;
 	run;
 	
+	/* ---------------------------------------------------------------------------------------------------- */	
+	/* --- Error checks (2 of 2) --- */
+	/* ---------------------------------------------------------------------------------------------------- */
+	proc sort data=&dsn.(keep=&id_var. &cycle_var.) out=_null_ nodupkey dupout=____dup_check0;
+		by &id_var. &cycle_var.;
+	run;
+	data ____dup_check;
+		merge &dsn.(in=a keep=&id_var. &cycle_var.) ____dup_check0 (in=b);
+		by &id_var. &cycle_var.;
+		if b;
+	run;
+	%let dup_count=0;
+	proc sql noprint;
+		select count(unique(&id_var.))
+		into : dup_count
+		from ____dup_check;
+	quit;
+	%if &dup_count.>0 %then %do;
+		data _null_;
+			put "WAR" "NING: There were %sysfunc(strip(&dup_count.)) individuals within %sysfunc(strip(&dsn.)) with duplicate observations at a single cycle.";
+			put "WAR" "NING: Duplicate observations will lead to invalid interpretations of results presented here.";
+			put "WAR" "NING: Duplicate observations shown below:";
+		run;
+		data _null_;
+			set ____dup_check;
+			observation = "ID:"||strip(&id_var.)||" CYCLE:"||strip(&cycle_var.);
+			put observation=;
+		run;
+	%end;
+	%let indi_vars=;
+	%let comp_vars=;
+	%let bad_obs=;
+	proc sql noprint;
+		select name
+		into : indi_vars separated by " "
+		from ____&dsn._conts
+		where index(upcase(name), "_COMP")=0;
+		select name
+		into : comp_vars separated by " "
+		from ____&dsn._conts
+		where index(upcase(name), "_COMP")>0;
+	quit;
+	/* --- Individual items --- */
+	%if %length(&indi_vars.) > 0 %then %do;
+		data _null_;
+			set ____&dsn.;
+			array indi_vars(*) &indi_vars.;
+			do i=1 to dim(indi_vars);
+				if indi_vars(i) ^ in (.,0,1,2,3,4) then do;
+					call symput("bad_obs", 1);
+					_obs_number_ = _n_;
+					put "ER" "ROR: Numerical PRO-CTCAE item responses should be integers between 0 and 4.";
+					put "ER" "ROR: See observation number and unexpected PRO-CTCAE response below.";
+					put _obs_number_=;
+					put indi_vars(i)=;
+				end;
+			end;
+		run;
+	%end;
+	/* --- Composite items --- */
+	%if %length(&comp_vars.) > 0 %then %do;
+		data _null_;
+			set ____&dsn.;
+			array comp_vars(*) &comp_vars.;
+			do i=1 to dim(comp_vars);
+				if comp_vars(i) ^ in (.,0,1,2,3) then do;
+					call symput("bad_obs", 1);
+					_obs_number_ = _n_;
+					put "ER" "ROR: Numerical PRO-CTCAE Composite responses should be integers between 0 and 3.";
+					put "ER" "ROR: See observation number and unexpected Composite response below.";
+					put _obs_number_=;
+					put comp_vars(i)=;
+				end;
+			end;
+		run;
+	%end;
+	%if &bad_obs.=1 %then %do;
+		%goto exit;
+	%end;
+	
 	/* ----------------------------------------------------- */
 	/* --- Start iteration ---- */
 	/* ----------------------------------------------------- */
@@ -581,7 +792,6 @@
 		into : max_rank
 		from ____&dsn._var_ref;
 	quit;
-	%put "&max_rank.";
 	%let i = 1;
 	%do %while(&i. <= &max_rank.);
 		%let var_a =;
@@ -1033,8 +1243,7 @@
 		run;
 		data ____together1;
 			length name $18;
-			set ____together;			
-			if strip(score) ^ in ("0", "NEVER", "NOT AT ALL", "NONE");			
+			set ____together;
 			if name = "a" then sort_flag = 1;
 				else if name = "b" then sort_flag = 2;
 				else if name = "c" then sort_flag = 3;
@@ -1080,14 +1289,31 @@
 		/*  ----------------------------------------------------------- */
 		
 		proc sql noprint;
-			%if %lowcase("&display.") = "present" %then %do;
+			/* Counts for  all */
+			%if &label.=0 or &label.=1  %then %do;
 				create table ____together2 as
 				select *, sum(count) as n_val, round(sum(percent),1) as perc_val
 				from ____together1
 				group by name, &arm_var., &cycle_var.
 				order by &cycle_var., name, &arm_var.;
-			%end;			
-				%else %if %lowcase("&display.") = "severe" %then %do;
+			%end;
+				/* Counts for present */
+				%else %if &label.=2 or &label.=4 %then %do;
+					create table ____together2 as
+					select *, 
+						round(sum(case when 
+							strip(score) ^ in ("0", "NEVER", "NOT AT ALL", "NONE") 
+							then percent else . end),1) as perc_val,
+						sum(case when 
+							strip(score) ^ in ("0", "NEVER", "NOT AT ALL", "NONE") 
+							then count else . end) as n_val
+					from ____together1
+					group by name, &arm_var., &cycle_var.
+					order by &cycle_var., name, &arm_var.;
+				%end;
+				
+				/* Counts for severe */
+				%else %if &label.=3 or &label.=5 %then %do;
 					create table ____together2 as
 					select *, 
 						round(sum(case when 
@@ -1122,9 +1348,6 @@
 				lab_perc="";
 			end;
 			if first.name and &cycle_var. = &baseline_val. then lab="N=";
-			%if &percent_label. = 1 %then %do;
-				if first.name and &cycle_var. = &baseline_val. then lab_perc="%=";
-			%end;
 			%if &arm_count. < 3 %then %do; 
 				if first.&arm_var. then do;
 					lab = catx("  ",lab, n_val);
@@ -1144,12 +1367,11 @@
 			set ____together3;
 			by &cycle_var. name &arm_var.;
 			if last.name=0 then lab = "";
-			if last.name=0 then perc_val = "";
 		run;
 		proc sort data=____together4;
 			by &cycle_var. name descending &arm_var. descending lab;
 		run;
-		data ____together5;
+		data ____together5_0;
 			set ____together4;
 			by &cycle_var. name;
 			retain n_val_lab perc_val_lab;
@@ -1157,12 +1379,59 @@
 				n_val_lab = lab;
 				perc_val_lab = lab_perc;
 			end;
-		run;		
+		run;
+		proc sort data=____together5_0;
+			by &cycle_var. &arm_var. sort_flag descending sort_flag2 ;
+		run;
+		proc sql noprint;
+			create table ____together5_1 as
+			select *, count(score) as level_count
+			from ____together5_0
+			group by &cycle_var., &arm_var., sort_flag;
+		quit;
+		data ____together5_2;
+			set ____together5_1;
+			by &cycle_var. &arm_var. sort_flag descending sort_flag2 ;
+			retain rank;
+			if first.sort_flag then rank=0;
+			rank +1;
+		run;
+		proc sort data=____together5_2;
+			by &cycle_var. &arm_var. sort_flag descending sort_flag2 ;
+		run;
+		data ____together5;
+			set ____together5_2;
+			/* Centering the count labeling for bars in plots */
+			if level_count=2 then do;
+				if rank ^= 2 then do;
+					n_val=.;
+					perc_val=.;
+				end;
+			end;
+				else if level_count=3 then do;
+					if rank ^= 2 then do;
+						n_val=.;
+						perc_val=.;
+					end;
+				end;
+				else if level_count=4 then do;
+					if rank ^= 2 then do;
+						n_val=.;
+						perc_val=.;
+					end;
+				end;
+				else if level_count=5 then do;
+					if rank ^= 3 then  do;
+						n_val=.;
+						perc_val=.;
+					end;
+				end;
+		run;
 		proc sort data=____together5;
 			by &cycle_var. sort_flag descending sort_flag2 &arm_var. ;
 		run;
 		data _null_;
-			call symput("imgfile_name", tranwrd(strip("&comp_label.")," ","_"));
+			call symput("imgfile_name", tranwrd(tranwrd(strip("&comp_label.")," ","_"),"/","_"));
 		run;
 		
 		/*  ------------------------------------------------ */
@@ -1170,90 +1439,153 @@
 		data ____title;
 			title = "&comp_label.";
 		run;
-		proc report data=____title nowindows noheader nocenter;
+		proc report data=____title nowindows noheader nocenter style(column)=[fontsize=4];
 		run;
 		/* ------------------------------------------------- */ 
 		
-		%if %lowcase("&label.") = "n" %then %do;
+		%if &label.=1 or &label.=2 or &label.=3 %then %do;
 			%let foot_type = number;
+			%let foot_symbol = (n);
 		%end;
-			%else %if %lowcase("&label.") = "percent" %then %do;
+			%if &label.=4 or &label.=5 %then %do;
 				%let foot_type = percent;
+			%let foot_symbol = (%);
 			%end;
-		%if %lowcase("&display.") = "present" %then %do;
+		
+		%if &label.=2 or &label.=4 %then %do;
 			%let foot_grade = 1;
 		%end;
-			%else %if %lowcase("&display.") = "severe" %then %do;
+			%if &label.=3 or &label.=5 %then %do;
 				%let foot_grade = 3;
 			%end;
-			
-		ods graphics / reset imagename="&imgfile_name." imagefmt=JPEG height=6.2in width=10in border=off;
-	
+		
+		%if %length(&output_dir.)=0 %then %do;
+			ods graphics / reset width = &width.in height=&height.in border=off;
+		%end;
+			%else %if %length(&output_dir.)^=0 %then %do;
+				ods graphics / reset imagename="&imgfile_name." imagefmt=JPEG width = &width.in height=&height.in  border=off;
+			%end;
+		proc sql noprint;
+			select dequote(fillcolor)
+			into : col1
+			from ____attrs1
+			where value = "MILD";
+			select dequote(fillcolor)
+			into : col2
+			from ____attrs1
+			where value = "MODERATE";
+			select dequote(fillcolor)
+			into : col3
+			from ____attrs1
+			where value = "SEVERE";
+			select dequote(fillcolor)
+			into : col4
+			from ____attrs1
+			where value = "VERY SEVERE";
+			select dequote(fillcolor)
+			into : comp1
+			from ____attrs1
+			where value = "1";
+			select dequote(fillcolor)
+			into : comp2
+			from ____attrs1
+			where value = "2";
+			select dequote(fillcolor)
+			into : comp3
+			from ____attrs1
+			where value = "3";
+		quit;
 		%if %lowcase("&label.") = "n" or %lowcase("&label.") = "percent" %then %do;
 			%if "&apply_a_fmt." = "frq" or "&apply_b_fmt." = "frq" or "&apply_c_fmt." = "frq" %then %do;
-				footnote1 justify=LEFT bold "Frequnecy: " c=VLIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Rarely (1) / "
-				  c=BIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Occasionally (2) / "
-				  c=VIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Frequently (3) / "
-				  c=DEGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Almost constantly (4) "
+				footnote1 height=&footnote_size.pt justify=LEFT bold "Frequency: " c=&col1. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Rarely / "
+				  c=&col2. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Occasionally / "
+				  c=&col3. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Frequently / "
+				  c=&col4. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Almost constantly "
 				  ;
 			%end;
 			%if "&apply_a_fmt." = "sev" or "&apply_b_fmt." = "sev" or "&apply_c_fmt." = "sev" %then %do;
-				footnote2 justify=LEFT bold "Severity: " c=VLIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Mild (1) / "
-				  c=BIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Moderate (2) / "
-				  c=VIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Severe (3) / "
-				  c=DEGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Very severe (4) "
+				footnote2 height=&footnote_size.pt justify=LEFT bold "Severity: " c=&col1. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Mild / "
+				  c=&col2. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Moderate / "
+				  c=&col3. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Severe / "
+				  c=&col4. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Very severe "
 				  ;
 			%end;
 			%if "&apply_a_fmt." = "int" or "&apply_b_fmt." = "int" or "&apply_c_fmt." = "int" %then %do;
-				footnote3 justify=LEFT bold "Interference: " c=VLIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " A little bit (1) / "
-				  c=BIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Somewhat (2) / "
-				  c=VIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Quite a bit (3) / "
-				  c=DEGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Very much (4) "
+				footnote3 height=&footnote_size.pt justify=LEFT bold "Interference: " c=&col1. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " A little bit / "
+				  c=&col2. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Somewhat / "
+				  c=&col3. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Quite a bit / "
+				  c=&col4. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Very much "
 				  ;
 			%end;
 		%end;
 		
 			%else %if %lowcase("&label.") ^= "n" and %lowcase("&label.") ^= "percent" %then %do;
 				%if "&apply_a_fmt." = "frq" or "&apply_b_fmt." = "frq" or "&apply_c_fmt." = "frq" %then %do;
-					footnote1 justify=LEFT bold "Frequnecy: " c=VLIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Rarely / "
-					  c=BIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Occasionally / "
-					  c=VIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Frequently / "
-					  c=DEGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Almost constantly "
+					footnote1 height=&footnote_size.pt justify=LEFT bold "Frequency: "
+					  %if &zero_display.=1 %then %do;
+					  		c=gray font="sans-serif" " (*ESC*){unicode '25A1'x} " c=black "Never /"
+					  %end;
+					  c=&col1. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Rarely /"
+					  c=&col2. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Occasionally /"
+					  c=&col3. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Frequently /"
+					  c=&col4. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Almost constantly"
 					  ;
 				%end;
 				%if "&apply_a_fmt." = "sev" or "&apply_b_fmt." = "sev" or "&apply_c_fmt." = "sev" %then %do;
-					footnote2 justify=LEFT bold "Severity: " c=VLIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Mild / "
-					  c=BIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Moderate / "
-					  c=VIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Severe / "
-					  c=DEGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Very severe "
+					footnote2 height=&footnote_size.pt justify=LEFT bold "Severity: "
+					  %if &zero_display.=1 %then %do;
+					  		c=gray font="sans-serif" " (*ESC*){unicode '25A1'x} " c=black "None /"
+					  %end;
+					  c=&col1. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Mild /"
+					  c=&col2. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Moderate /"
+					  c=&col3. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Severe /"
+					  c=&col4. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Very severe"
 					  ;
 				%end;
 				%if "&apply_a_fmt." = "int" or "&apply_b_fmt." = "int" or "&apply_c_fmt." = "int" %then %do;
-					footnote3 justify=LEFT bold "Interference: " c=VLIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " A little bit / "
-					  c=BIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Somewhat / "
-					  c=VIGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Quite a bit / "
-					  c=DEGB font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " Very much "
+					footnote3 height=&footnote_size.pt justify=LEFT bold "Interference: "
+					  %if &zero_display.=1 %then %do;
+					  		c=gray font="sans-serif" " (*ESC*){unicode '25A1'x} " c=black "Not at all / "
+					  %end;
+					  c=&col1. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "A little bit /"
+					  c=&col2. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Somewhat /"
+					  c=&col3. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Quite a bit /"
+					  c=&col4. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "Very much"
 					  ;
 				%end;
 			%end;
 		
 		%if %length(&var_comp.)>0 %then %do;
-			footnote4 justify=LEFT bold "Composite Grade: " c=PAPK font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " 1 / "
-			  c=STPK font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " 2 / "
-			  c=DEPK font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black " 3 "
+			footnote4 height=&footnote_size.pt justify=LEFT bold "Composite Grade: " 
+			  %if &zero_display.=1 %then %do;
+			  		c=gray font="sans-serif" " (*ESC*){unicode '25A1'x} " c=black "0 /"
+			  %end;
+			  c=&comp1. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "1 /"
+			  c=&comp2. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "2 /"
+			  c=&comp3. font="sans-serif" " (*ESC*){unicode '25A0'x} " c=black "3"
 			  ;
 		%end;
-		%if %lowcase("&label.") = "n" or %lowcase("&label.") = "percent" %then %do;
-			footnote5 justify=LEFT "Column labels show the &foot_type. of subjects with symptom grade &foot_grade. or greater.";
+		%if &label.=1 %then %do;
+			footnote5 height=&footnote_size.pt justify=LEFT "Column labels (n) show the number of subjects with an observed symptom grade.";
 		%end;
-		footnote6 justify=LEFT "*Maximum score or grade reported post-baseline per patient.";
-		footnote7 justify=LEFT "**Maximum score or grade reported post-baseline per patient when including only scores which were worse than the patient's baseline score.";
-		ods listing gpath="&output_dir." image_dpi=450;
-		ods graphics / width = &width.in height=&height.in;
+			%else %if &label.=2 or &label.=3 or &label.=4 or &label.=5 %then %do;
+				footnote5 height=&footnote_size.pt justify=LEFT "Column labels &foot_symbol. show the &foot_type. of subjects with symptom grade &foot_grade. or greater.";
+			%end;
+		footnote6 height=&footnote_size.pt justify=LEFT "*Maximum score or grade reported post-baseline per patient.";
+		footnote7 height=&footnote_size.pt justify=LEFT "**Maximum score or grade reported post-baseline per patient when including only scores which were worse than the patient's baseline score.";
+		%if %length(&output_dir.)^=0 %then %do;
+			ods listing gpath="&output_dir." image_dpi=&dpi.;
+		%end;
+		title "&comp_label.";
+		title;
+		ods graphics / width = &width.in height = &height.in;
 		proc sgpanel data=____together5 dattrmap=____attrs1 noautolegend;
 			where score ^= "0"
 				%if %length(&plot_limit.)^=0 %then %do;
 					and (&cycle_var. <= &plot_limit. or &cycle_var. >= 11111)
+				%end;
+				%if &summary_only.=1 %then %do;
+					and &cycle_var. in (11111, 22222)
 				%end;;
 			label &arm_var. =
 				%if &arm_var. = __ovrlarm__ %then %do;
@@ -1268,19 +1600,24 @@
 					colheaderpos=both
 				%end;;
 			vbar &arm_var. / response=percent group = score attrid=level grouporder=data;
-			%if %lowcase("&label.") = "n" %then %do;
-				inset n_val_lab / nolabel noborder position=top textattrs=(family=arial size=&text_size.);
+			%if &label.=1 or &label.=2 or &label.=3 %then %do;
+				colaxistable n_val / stat=mean label="n:" position=top nomissingchar nomissingclass droponmissing
+					classdisplay=cluster separator pad=(top=4) labelpos=left;
 			%end;
-				%else %if %lowcase("&label.") = "percent" %then %do;
-					inset perc_val_lab / nolabel noborder position=top textattrs=(family=arial size=&text_size.);
-				%end;		
+				%if &label.=4 or &label.=5 %then %do;
+					colaxistable perc_val / stat=mean label="%:" position=top nomissingchar nomissingclass droponmissing
+						classdisplay=cluster separator pad=(top=4) labelpos=left;
+				%end;
 			rowaxis min=0 max=100 values=(0 20 40 60 80 100) fitpolicy=thin;
-			colaxis fitpolicy=rotatethin 
+			colaxis fitpolicy=rotatethin /*offsetmax=.6 offsetmin=.6*/
 				%if &arm_var. = __ovrlarm__ %then %do;
 					display=none
 				%end;;
 		run;
-		ods listing close;
+		%if %length(&output_dir.)^=0 %then %do;
+			ods listing close;
+			ods listing;
+		%end;
 		footnote1;
 		footnote2;
 		footnote3;
@@ -1315,17 +1652,7 @@
 	proc datasets noprint;
 		delete _sgsrt2_ ____:;
 	quit;
+	options &user_notes. &user_mprint. &user_symbolgen. &user_mlogic. &user_mlogicnest.;
 %mend;
-
-
-
-
-
-
-
-
-
-
-
 
 
