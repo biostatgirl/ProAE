@@ -538,7 +538,6 @@
 			set ____proctcae_vars (drop=fmt_name);
 		run;
 	%end;
-	
 	%if &colors.=1 %then %do;
 	 	data ____attrs1;
 			length fillcolor $10 id $5 linecolor $10 value $18;
@@ -611,13 +610,11 @@
 				fillcolor='CX000000' ;id='level' ;linecolor='CX000000' ;value='3' ; output;
 			run;
 		%end;
-	
 	%if %length(&coldat.) ^= 0 %then %do;
 		data ____attrs1;
 			set &coldat.;
 		run;
 	%end;
-	
 	%if &zero_display.=0 %then %do;
 	 	data ____attrs1;
 			set ____attrs1;
@@ -625,8 +622,6 @@
 		run;
  	%end;
 	
-
-	 
 	/* ----------------------------------------------------- */
 	/* --- Iterate through vars within dsn ---- */
 	/* ----------------------------------------------------- */
@@ -723,15 +718,16 @@
 	quit;
 	%if &dup_count.>0 %then %do;
 		data _null_;
-			put "WAR" "NING: There were %sysfunc(strip(&dup_count.)) individuals within %sysfunc(strip(&dsn.)) with duplicate observations at a single cycle.";
-			put "WAR" "NING: Duplicate observations will lead to invalid interpretations of results presented here.";
-			put "WAR" "NING: Duplicate observations shown below:";
+			put "ER" "ROR: There were %sysfunc(strip(&dup_count.)) individuals within %sysfunc(strip(&dsn.)) with duplicate observations at a single cycle.";
+			put "ER" "ROR: Duplicate observations will lead to invalid interpretations of results presented here.";
+			put "ER" "ROR: Duplicate observations shown below:";
 		run;
 		data _null_;
 			set ____dup_check;
 			observation = "ID:"||strip(&id_var.)||" CYCLE:"||strip(&cycle_var.);
 			put observation=;
 		run;
+		%goto exit;
 	%end;
 	%let indi_vars=;
 	%let comp_vars=;
