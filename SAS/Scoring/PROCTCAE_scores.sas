@@ -1,7 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 :	PROCTCAE_scores
-   | VERSION	 :	0.0.6 (beta)
+   | VERSION	 :	1.0.0
    | SHORT DESC  :	Recodes PRO-CTCAE survey responses and calculates composite scores
    | 			
    *------------------------------------------------------------------------------------------*
@@ -33,6 +33,7 @@
    |					
    |				EXTPECTED DATA FORMAT
    |				 Data format should be in 'long' format, where each PRO-CTCAE item is a variable/column.
+   |				 All PRO-CTCAE variables must either be numeric or character when applying this macro.
    |					
    |					
    *------------------------------------------------------------------------------------------*
@@ -88,6 +89,17 @@
    | Purpose   : Creates a new data set copy of dsn with changes from macro application
    | Default   : Output data will take original dsn name (i.e. overwrite original data)
    |
+   | Name      : PROCTCAE_table
+   | Type      : 1 = Create PRO-CTCAE variable/label reference table, 0 = do not create table
+   | Purpose   : Creates a SAS dataset named 'PROCTCAE_table' listing all PRO-CTCAE variable names
+   |			 and respective short lables 
+   | Default   : 0 = do not create table
+   |
+   | Name      : debug
+   | Type      : 1 = Print notes and macro values and logic for debugging, 0 = no debugging
+   | Purpose   : Used for debugging unexpected results
+   | Default   : 0 = no debugging
+   |
    *------------------------------------------------------------------------------------------*
    | RETURNED INFORMATION
    |
@@ -100,16 +112,37 @@
    |
    *------------------------------------------------------------------------------------------*
    |
+   | This program is free software; you can redistribute it and/or
+   | modify it under the terms of the GNU General Public License as
+   | published by the Free Software Foundation; either version 3 of
+   | the License, or (at your option) any later version.
+   |
    | This program is distributed in the hope that it will be useful,
    | but WITHOUT ANY WARRANTY; without even the implied warranty of
    | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
    | General Public License for more details.
    *------------------------------------------------------------------------------------------*/
 
+%macro PROCTCAE_scores(dsn, impute, dsn_out, composites, reformat, debug, proctcae_table);
 
-
-%macro PROCTCAE_scores(dsn, impute, dsn_out, composites, reformat);
-
+	/* ---------------------------------------------------------------------------------------------------- */	
+	/* --- Allowance for debugging --- */
+	/* ---------------------------------------------------------------------------------------------------- */	
+	%let user_notes = %sysfunc(getoption(notes));
+	%let user_mprint = %sysfunc(getoption(mprint));
+	%let user_symbolgen = %sysfunc(getoption(symbolgen));
+	%let user_mlogic = %sysfunc(getoption(mlogic));
+	%let user_mlogicnest = %sysfunc(getoption(mlogicnest));
+	%if %length(&dsn.)=0 %then %do;
+		%let debug=0;
+	%end;
+	%if &debug.=1 %then %do;
+		options notes mprint symbolgen mlogic mlogicnest;
+	%end;
+		%else %do;
+			options nonotes nomprint nosymbolgen nomlogic nomlogicnest;
+		%end;
+		
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Reference data sets --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
@@ -438,7 +471,7 @@
 	%end;
 	
 	/* ---------------------------------------------------------------------------------------------------- */	
-	/* --- Error checks --- */
+	/* --- Error checks (1 of 3) --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
 	%if %length(&dsn.)=0 %then %do;
 		data _null_;
@@ -473,6 +506,31 @@
 	run;
 	proc contents data=____dsn1 noprint out=____dsn_conts;
 	run;
+	
+	/* ---------------------------------------------------------------------------------------------------- */	
+	/* --- Error checks (2 of 3) --- */
+	/* ---------------------------------------------------------------------------------------------------- */	
+	proc sql noprint;
+		select "'"||strip(upcase(name))||"'"
+		into : dsn_pro_vars separated by " "
+		from ____dsn_conts;
+	quit;
+	
+	%let no_pro_vars=;
+	data _null_;
+		set ____proctcae_vars;
+		if name in (&dsn_pro_vars.) then do;
+			call symput("no_pro_vars", 1);
+			stop;
+		end;
+	run;
+	%if %length(&no_pro_vars.)=0 %then %do;
+		data _null_;
+			put "ER" "ROR: No PRO-CTCAE variables found in &dsn. fitting this macro's required format.";
+		run;
+    	%goto exit;
+    %end;
+	
 
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Defaults / references --- */
@@ -483,20 +541,26 @@
 			'A LITTLE BIT' = 1
 			'SOMEWHAT' = 2
 			'QUITE A BIT' = 3
-			'VERY MUCH' = 4;
+			'VERY MUCH' = 4
+			' ' = .
+			other = 100;
 		invalue sev_6_fmt (upcase)
 			'NONE' = 0
 			'MILD' = 1
 			'MODERATE' = 2
 			'SEVERE' = 3
 			'VERY SEVERE' = 4
-			'NOT APPLICABLE' = .;
+			'NOT APPLICABLE' = .
+			' ' = .
+			other = 100;;
 		invalue sev_5_fmt (upcase)
 			'NONE' = 0
 			'MILD' = 1
 			'MODERATE' = 2
 			'SEVERE' = 3
-			'VERY SEVERE' = 4;
+			'VERY SEVERE' = 4
+			' ' = .
+			other = 100;;
 		invalue sev_7_fmt (upcase)
 			'NONE' = 0
 			'MILD' = 1
@@ -504,13 +568,17 @@
 			'SEVERE' = 3
 			'VERY SEVERE' = 4
 			'NOT SEXUALLY ACTIVE' = .
-			'PREFER NOT TO ANSWER' = .;
+			'PREFER NOT TO ANSWER' = .
+			' ' = .
+			other = 100;;
 		invalue frq_5_fmt (upcase)
 			'NEVER' = 0
 			'RARELY' = 1
 			'OCCASIONALLY' = 2
 			'FREQUENTLY' = 3
-			'ALMOST CONSTANTLY' = 4;
+			'ALMOST CONSTANTLY' = 4
+			' ' = .
+			other = 100;;
 		invalue frq_7_fmt (upcase)
 			'NEVER' = 0
 			'RARELY' = 1
@@ -518,19 +586,27 @@
 			'FREQUENTLY' = 3
 			'ALMOST CONSTANTLY' = 4
 			'NOT SEXUALLY ACTIVE' = .
-			'PREFER NOT TO ANSWER' = .;
+			'PREFER NOT TO ANSWER' = .
+			' ' = .
+			other = 100;;
 		invalue yn_2_fmt (upcase)
 			'YES' = 1
-			'NO' = 0;
+			'NO' = 0
+			' ' = .
+			other = 100;;
 		invalue yn_3_fmt (upcase)
 			'YES' = 1
 			'NO' = 0
-			'NOT APPLICABLE' = .;
+			'NOT APPLICABLE' = .
+			' ' = .
+			other = 100;;
 		invalue yn_4_fmt (upcase)
 			'YES' = 1
 			'NO' = 0
 			'NOT SEXUALLY ACTIVE' = .
-			'PREFER NOT TO ANSWER' = .;
+			'PREFER NOT TO ANSWER' = .
+			' ' = .
+			other = 100;;
 	run;
 	data ____proctcae_comp_vars;
 		set ____proctcae_vars;
@@ -544,9 +620,14 @@
 		comp_label=substr(short_label, 1, pos-2);
 		name = "PROCTCAE_"||strip(num)||"_COMP";
 	run;
+	%if &proctcae_table.=1 %then %do;
+		data PROCTCAE_table;
+			set ____proctcae_vars (drop=fmt_name);
+		run;
+	%end;
 		
 	/* ---------------------------------------------------------------------------------------------------- */	
-	/* --- construct code to later impute zeros of of q's with A/B or A/B/C structure */
+	/* --- Construct code to later impute zeros of of q's with A/B or A/B/C structure */
 	/* ---------------------------------------------------------------------------------------------------- */
 	/* --- Write a check to confirm if there is a "B" or "C" field, the associated "A" field exists */
 	%let impute0_AB=;
@@ -561,19 +642,20 @@
 		from ____dsn_conts
 		where index(upcase(name), "PROCTCAE") > 0 and index(scan(name, 2, "_"), "C") > 0;
 	quit;
-	%put "&impute0_AB.";
-	%put "&impute0_AC.";
 	
 	/* ---------------------------------------------------------------------------------------------------- */	
-	/* --- construct code to later write label statements for existing PROCTCAEs in the dsn */
+	/* --- Construct code to later write label statements for existing PROCTCAEs in the dsn */
 	/* ---------------------------------------------------------------------------------------------------- */
 	proc sql noprint;
 		select ____proctcae_vars.name || " ='" || strip(____proctcae_vars.short_label) ||"'"
 		into : labels separated by " "
 		from ____dsn_conts, ____proctcae_vars
 		where upcase(____dsn_conts.name) = ____proctcae_vars.name;
-		select ____proctcae_vars.name
-		into : PROCTCAE_reorder separated by " "
+		select ____proctcae_vars.name, "old_"||strip(____proctcae_vars.name), "'"||strip(____proctcae_vars.short_label)||"'", count(____proctcae_vars.short_label)
+		into : PROCTCAE_reorder separated by " ",
+			 : old_PROCTCAE_reorder separated by " ",
+			 : PROCTCAE_reorder_lab separated by " ",
+			 : PROCTCAE_reorder_lab_count
 		from ____dsn_conts, ____proctcae_vars
 		where upcase(____dsn_conts.name) = ____proctcae_vars.name
 		order by name;
@@ -680,7 +762,8 @@
 	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Reformat and apply optional zero imputation
-	/* ---------------------------------------------------------------------------------------------------- */	
+	/* ---------------------------------------------------------------------------------------------------- */
+	%let bad_obs=;
 	data ____dsn2;
 		set ____dsn1;	
 		%if %length(&int_5_vars.)>0 %then %do;
@@ -799,9 +882,51 @@
 			label &labels.;
 		%end;
 		
+		/* ---------------------------------------------------------------------------------------------------- */	
+		/* --- Error checks (3 of 3) --- */
+		/* ---------------------------------------------------------------------------------------------------- */
+		%if &reformat. = 1 %then %do;
+			array provars(*) &PROCTCAE_reorder.;
+			array provars_old(*) &old_PROCTCAE_reorder.;
+			array label(&PROCTCAE_reorder_lab_count.) $50 _temporary_ (&PROCTCAE_reorder_lab.);
+			do i=1 to dim(provars);
+				if provars(i)=100 then do;
+					call symput("bad_obs", 1);
+					_obs_number_ = _n_;
+					put "ER" "ROR: The text response observed for this PRO-CTCAE item is unexpected.";
+					put "ER" "ROR: See observation number and unexpected PRO-CTCAE response below.";
+					put _obs_number_=;
+					put label(i)=;
+					put provars_old(i)=;
+				end;
+			end;
+		%end;
+			%else %if &reformat. = 0 %then %do;
+				array provars(*) &PROCTCAE_reorder.;
+				array label(&PROCTCAE_reorder_lab_count.) $50 _temporary_ (&PROCTCAE_reorder_lab.);
+				do i=1 to dim(provars);
+					if provars(i) ^ in (.,0,1,2,3,4) then do;
+						call symput("bad_obs", 1);
+						_obs_number_ = _n_;
+						put "ER" "ROR: Numerical PRO-CTCAE item responses should be integers between 0 and 4.";
+						put "ER" "ROR: See observation number and unexpected PRO-CTCAE response below.";
+						put _obs_number_=;
+						put label(i)=;
+						put provars(i)=;
+					end;
+				end;
+			%end;
+
+		/* ---------------------------------------------------------------------------------------------------- */
+		/* --- --- */
+		/* ---------------------------------------------------------------------------------------------------- */	
+
 		drop ____i &old_int_5_vars. &old_sev_5_vars. &old_sev_6_vars. &old_sev_7_vars. &old_frq_5_vars. 
-			&old_frq_7_vars. &old_yn_2_vars. &old_yn_3_vars. &old_yn_4_vars. old_proctcae_:;	
+			&old_frq_7_vars. &old_yn_2_vars. &old_yn_3_vars. &old_yn_4_vars. old_proctcae_: i _obs_number_;	
 	run;
+	%if &bad_obs.=1 %then %do;
+		%goto exit;
+	%end;
 	%if %length(&dsn_out.)=0 %then %do;
 		%let dsn_out = &dsn.;
     %end;
@@ -954,7 +1079,6 @@
 							code_int = " ";
 							%end;
 						full_coding = "else if "||catx(" and ", code_frq, code_sev, code_int)||" then PROCTCAE_&qnum._COMP = "||strip(comp)|| ";";
-						put full_coding=;
 					run;
 					proc sql noprint;
 						select full_coding
@@ -1000,4 +1124,5 @@
 	proc datasets noprint nolist; 
 		delete ____:;
 	quit;
+	options &user_notes. &user_mprint. &user_symbolgen. &user_mlogic. &user_mlogicnest.;
 %mend;
