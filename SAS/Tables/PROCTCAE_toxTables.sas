@@ -1,14 +1,13 @@
-
+                                                                                                                                    
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : 	PROCTCAE_toxTables
-   | VERSION	 : 	0.0.7 (beta)
+   | VERSION	 : 	1.0.0
    | SHORT DESC  : 	Creates toxicity tables for individual and composite PRO-CTCAE survey items.
-   |
    |
    *------------------------------------------------------------------------------------------*
    | AUTHORS  	 :	Blake T Langlais, Amylou C Dueck
    *------------------------------------------------------------------------------------------*
-   | MODIFIED BY : 
+   | 
    *------------------------------------------------------------------------------------------*
    | PURPOSE	 : 	This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
    |			   	then outputs an Excel data file with toxicity tables for individual survey items and 
@@ -60,9 +59,7 @@
 	%PROCTCAE_toxTables(dsn = ,
 						id_var = ,
 						cycle_var = ,
-						baseline_val = ,
-						output_dir = ,
-						output_filename = );
+						baseline_val = );
 						
    |
    *------------------------------------------------------------------------------------------*
@@ -80,20 +77,20 @@
    | Type      : Valid numeric variable name
    | Purpose   : Field name of variable differentiating one longitudinal/repeated PRO-CTCAE
    |             suvey from another, within an individual ID
-   |    
+   |
    | Name      : baseline_val
    | Type      : Numerical value for baseline cycle/time
    | Purpose   : This is the value indicating an individual's baseline time point (e.g. cycle 1, time 0, visit 1) 
+   *------------------------------------------------------------------------------------------*
+   | OPTIONAL PARAMETERS
    |
    | Name      : output_dir
    | Type      : Valid directory to the output folder of choice
-   | Purpose   : This is the directory location where Excel files will be output
+   | Purpose   : This is the directory location where Excel files will be output (must be used with output_filename)
    |    
    | Name      : output_filename
    | Type      : Valid filename for the output Excel file. Do not include file extension (e.g., .xlsx, .xls)
-   | Purpose   : This will be the name of the output file found within the specified output directory   
-   *------------------------------------------------------------------------------------------*
-   | OPTIONAL PARAMETERS
+   | Purpose   : The output file to be created within the output directory (must be used with output_dir)
    |
    | Name      : arm_var
    | Type      : Valid variable name (must be a character variable)
@@ -132,6 +129,17 @@
    | Purpose   : Limit the data to be analyzed up to and including a given cycle number or time point
    | Default   : All available cycles or time points are used
    |
+   | Name      : PROCTCAE_table
+   | Type      : 1 = Create PRO-CTCAE variable/label reference table, 0 = do not create table
+   | Purpose   : Creates a SAS dataset named 'PROCTCAE_table' listing all PRO-CTCAE variable names
+   |			 and respective short lables 
+   | Default   : 0 = do not create table
+   |
+   | Name      : debug
+   | Type      : 1 = Print notes and macro values and logic for debugging, 0 = no debugging
+   | Purpose   : Used for debugging unexpected results
+   | Default   : 0 = no debugging
+   |
    *------------------------------------------------------------------------------------------*
    | ADDITIONAL NOTES
    |
@@ -151,9 +159,26 @@
    | General Public License for more details.
    *------------------------------------------------------------------------------------------*/
 
-
-
-%macro PROCTCAE_toxTables(dsn, id_var, arm_var, cycle_var, baseline_val, cycle_limit, type, test, fmt_pvalues, riskdiff, output_dir, output_filename);
+%macro PROCTCAE_toxTables(dsn, id_var, arm_var, cycle_var, baseline_val, cycle_limit, type, test, 
+							fmt_pvalues, riskdiff, output_dir, output_filename, debug, proctcae_table);
+	
+	/* ---------------------------------------------------------------------------------------------------- */	
+	/* --- Allowance for debugging --- */
+	/* ---------------------------------------------------------------------------------------------------- */	
+	%let user_notes = %sysfunc(getoption(notes));
+	%let user_mprint = %sysfunc(getoption(mprint));
+	%let user_symbolgen = %sysfunc(getoption(symbolgen));
+	%let user_mlogic = %sysfunc(getoption(mlogic));
+	%let user_mlogicnest = %sysfunc(getoption(mlogicnest));
+	%if %length(&dsn.)=0 %then %do;
+		%let debug=0;
+	%end;
+	%if &debug.=1 %then %do;
+		options notes mprint symbolgen mlogic mlogicnest;
+	%end;
+		%else %do;
+			options nonotes nomprint nosymbolgen nomlogic nomlogicnest;
+		%end;
 	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Reference data sets --- */
@@ -287,7 +312,7 @@
 	 run;
 
 	/* ---------------------------------------------------------------------------------------------------- */	
-	/* --- Error checks --- */
+	/* --- Error checks (1 of 2) --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
 	%if %length(&dsn.)=0 %then %do;
 		data _null_;
@@ -307,24 +332,55 @@
 		run;
     	%goto exit;
     %end;
+    %if %length(&cycle_var.)=0 %then %do;
+		data _null_;
+			put "ER" "ROR: No cycle variable provided.";
+		run;
+    	%goto exit;
+    %end;
     %if %length(&baseline_val.)=0 %then %do;
 		data _null_;
 			put "ER" "ROR: No baseline time provided.";
 		run;
     	%goto exit;
     %end;
-	%if %length(&output_dir.)=0 %then %do;
+	%if (%length(&output_filename.)=0 and %length(&output_dir.)^=0) or
+			(%length(&output_filename.)^=0 and %length(&output_dir.)=0) %then %do;
 		data _null_;
-			put "ER" "ROR: No output directory provided.";
+			put "ER" "ROR: Output filename and directory must be provided together in order to output file.";
 		run;
     	%goto exit;
-    %end;   
-    %if %length(&output_filename.)=0 %then %do;
+    %end;
+	proc contents data=&dsn. out=____conts noprint;
+	run; 
+	proc sql noprint;
+		select "'"||strip(upcase(name))||"'"
+		into : dsn_pro_vars separated by " "
+		from ____conts;
+	quit;
+	%let no_pro_vars=;
+	data _null_;
+		set ____proctcae_vars;
+		if name in (&dsn_pro_vars.) then do;
+			call symput("no_pro_vars", 1);
+			stop;
+		end;
+	run;
+	%if %length(&no_pro_vars.)=0 %then %do;
 		data _null_;
-			put "ER" "ROR: No output filename provided.";
+			put "ER" "ROR: No PRO-CTCAE variables found in &dsn. fitting this macro's required format.";
 		run;
     	%goto exit;
-    %end;    
+    %end;
+    
+	
+	/* ---------------------------------------------------------------------------------------------------- */	
+	/* --- Defaults / references --- */
+	/* ---------------------------------------------------------------------------------------------------- */	
+    %let outputfile=;
+    %if %length(&output_filename.)^=0 and %length(&output_dir.)^=0 %then %do;
+    	%let outputfile = 1;
+    %end;
 	%if %length(&riskdiff.)=0 %then %do;
     	%let riskdiff=0;
 	%end;
@@ -340,7 +396,6 @@
 		%else %do;
 			%let type = %lowcase(&type.);
 		%end;
-		
 	%if %lowcase(%sysfunc(strip("&type."))) ^= ("max_post_bl") %then %do;
 		%let type = bl_adjusted;
 	%end;
@@ -373,10 +428,6 @@
 		comp_label=substr(short_label, 1, pos-2);
 		name = "PROCTCAE_"||strip(num)||"_COMP";
 	run;
-	
-	/* ---------------------------------------------------------------------------------------------------- */	
-	/* --- Defaults / references --- */
-	/* ---------------------------------------------------------------------------------------------------- */	
 	proc format;
 		invalue present_fmt
 			0 = 0
@@ -389,8 +440,11 @@
 		value pv_bold
 			low - < .05 = "bold";
 	run;
-	proc contents data=&dsn. out=____&dsn._conts noprint;
-	run; 
+	%if &proctcae_table.=1 %then %do;
+		data PROCTCAE_table;
+			set ____proctcae_vars (drop=fmt_name);
+		run;
+	%end;
 	
 	/* --------------------------------------------------------------------------------------- */
 	/* --- Get baseline adjusted and unadjusted max scores for each subject accross cycles --- */
@@ -410,10 +464,93 @@
 		by &id_var. &cycle_var.;
 	run;
 	data ____vars_ref;
-		set ____&dsn._conts (keep=name);
+		set ____conts (keep=name);
 		where index(upcase(name), "PROCTCAE_")>0 and index(upcase(name), "_IND")=0; /* remove y/n items */
 		rank + 1;
 	run;
+	/* ---------------------------------------------------------------------------------------------------- */	
+	/* --- Error checks (2 of 2) --- */
+	/* ---------------------------------------------------------------------------------------------------- */
+	proc sort data=&dsn.(keep=&id_var. &cycle_var.) out=_null_ nodupkey dupout=____dup_check0;
+		by &id_var. &cycle_var.;
+	run;
+	data ____dup_check;
+		merge &dsn.(in=a keep=&id_var. &cycle_var.) ____dup_check0 (in=b);
+		by &id_var. &cycle_var.;
+		if b;
+	run;
+	%let dup_count=0;
+	proc sql noprint;
+		select count(unique(&id_var.))
+		into : dup_count
+		from ____dup_check;
+	quit;
+	%if &dup_count.>0 %then %do;
+		data _null_;
+			put "ER" "ROR: There were %sysfunc(strip(&dup_count.)) individuals within %sysfunc(strip(&dsn.)) with duplicate observations at a single cycle.";
+			put "ER" "ROR: Duplicate observations will lead to invalid interpretations of results presented here.";
+			put "ER" "ROR: Duplicate observations shown below:";
+		run;
+		data _null_;
+			set ____dup_check;
+			observation = "ID:"||strip(&id_var.)||" CYCLE:"||strip(&cycle_var.);
+			put observation=;
+		run;
+		%goto exit;
+	%end;
+	%let indi_vars=;
+	%let comp_vars=;
+	%let bad_obs=;
+	proc sql noprint;
+		select name
+		into : indi_vars separated by " "
+		from ____vars_ref
+		where index(upcase(name), "_COMP")=0;
+		select name
+		into : comp_vars separated by " "
+		from ____vars_ref
+		where index(upcase(name), "_COMP")>0;
+	quit;
+	/* --- Individual items --- */
+	%if %length(&indi_vars.) > 0 %then %do;
+		data _null_;
+			set ____&dsn.;
+			array indi_vars(*) &indi_vars.;
+			do i=1 to dim(indi_vars);
+				if indi_vars(i) ^ in (.,0,1,2,3,4) then do;
+					call symput("bad_obs", 1);
+					_obs_number_ = _n_;
+					put "ER" "ROR: Numerical PRO-CTCAE item responses should be integers between 0 and 4.";
+					put "ER" "ROR: See observation number and unexpected PRO-CTCAE response below.";
+					put _obs_number_=;
+					put indi_vars(i)=;
+				end;
+			end;
+		run;
+	%end;
+	/* --- Composite items --- */
+	%if %length(&comp_vars.) > 0 %then %do;
+		data _null_;
+			set ____&dsn.;
+			array comp_vars(*) &comp_vars.;
+			do i=1 to dim(comp_vars);
+				if comp_vars(i) ^ in (.,0,1,2,3) then do;
+					call symput("bad_obs", 1);
+					_obs_number_ = _n_;
+					put "ER" "ROR: Numerical PRO-CTCAE Composite responses should be integers between 0 and 3.";
+					put "ER" "ROR: See observation number and unexpected Composite response below.";
+					put _obs_number_=;
+					put comp_vars(i)=;
+				end;
+			end;
+		run;
+	%end;
+	%if &bad_obs.=1 %then %do;
+		%goto exit;
+	%end;
+	/* ---------------------------------------------------------------------------------------------------- */	
+	/* ---------------------------------------------------------------------------------------------------- */	
+		
 	/* --- Ref list of IDs in dsn for use in summary measure do loop below --- */
 	proc sort data=____&dsn.(keep=&id_var. &arm_var.) nodupkey out=____id_score;
 		by &id_var.;
@@ -423,14 +560,12 @@
 		into : max_rank
 		from ____vars_ref;
 	quit;
-	%put "&max_rank.";
 	%let i = 1;
 	%do %while(&i. <= &max_rank.);
 		data _null_;
 			set ____vars_ref (where=(rank=&i.));
 			call symput("var_i", strip(name));
 		run;
-		%put "&var_i.";
 		data ____dsn_out_coding0;
 			set ____&dsn. (keep=&id_var. &var_i. &cycle_var.);
 			by &id_var.;
@@ -480,7 +615,7 @@
 			 : severe_fmts separated by " ",
 			 : present_vars separated by " ",
 			 : severe_vars separated by " "
-		from ____&dsn._conts
+		from ____conts
 		where index(upcase(name), "PROCTCAE_")>0 and index(upcase(name), "_IND")=0 /* remove y/n items */
 		order by varnum;
 	quit;
@@ -492,12 +627,14 @@
 	proc sort data=____&dsn.2;
 		by &arm_var.;
 	run;
+	ods exclude all;
 	ods output CrossTabFreqs=____ct 
 			%if &arm_count. > 1 %then %do; ChiSq=____cs FishersExact=____fe %end;
 			%if &arm_count. = 2 %then %do; RiskDiffCol2=____rd0 %end;;
 	proc freq data=____&dsn.2;
 		table &arm_var.*(&present_vars. &severe_vars.) / nocol nopercent chisq fisher riskdiff out=____ct_check;
 	run;
+	ods exclude none;
 	/* ----------------------------------------------------------------------------- */
 	/* --- Get counts and presence rates for 0/1+ and (1,2)>3+ by arm --- */
 	/* ----------------------------------------------------------------------------- */
@@ -508,14 +645,30 @@
 		where _type_ = "11" and not missing(&arm_var.)
 		group by &arm_var., table;
 	quit;
-	data ____ct3;
+	data ____ct3_0;
 		set ____ct2;
+		retain combine;
 		combine = sum(of PROCTCAE_:);
 		item = scan(table,3);
 		rate = frequency||" ("||strip(round(RowPercent,1))||"%)";
-		if combine = 1;
+		
+		/* -- Account for PROCTCAE items with all zero grades -- */
+		if RowPercent = 100 and combine = 0 then do;
+			rate = "0 (0%)";
+			all_zero = 1;
+		end;
+		
+		if combine = 1 or all_zero = 1;
 		rename tot_nonmiss = arm_n;
-		keep item &arm_var. tot_nonmiss rate;
+	run;
+	proc sort data=____ct3_0;
+		by item &arm_var. descending combine all_zero;
+	run;
+	data ____ct3;
+		set ____ct3_0;
+		by item &arm_var.;
+		if first.&arm_var.;
+		keep item &arm_var. arm_n rate;
 	run;
 	proc sort data=____ct3;
 		by item;
@@ -621,10 +774,12 @@
 		
 		/* ----------------------------------------------------------------------------- */
 		/* --- Build the final tables for overall group (reports) --- */
-		/* ----------------------------------------------------------------------------- */		
-		options papersize=(22in 27in);
-		ods excel file="&output_dir./&output_filename..xlsx";			
-		ods excel options(sheet_name="PRO-CTCAE Individual");
+		/* ----------------------------------------------------------------------------- */
+		%if &outputfile.=1 %then %do;
+			options papersize=(22in 27in);
+			ods excel file="&output_dir./&output_filename..xlsx";			
+			ods excel options(sheet_name="PRO-CTCAE Individual");
+		%end;
 		proc report data=____table_dat_indi style(report)=[frame=void rules=group];
 			label 	label = "PRO-CTCAE Individual Item Analysis" 
 					Overall_n = 'Overall' 
@@ -639,7 +794,9 @@
 			define label / style(column header)={borderrightcolor=black};
 			define Overall_n / style(column header)={borderrightcolor=black};
 		run;
-		ods excel options(sheet_name="PRO-CTCAE Composite");
+		%if &outputfile.=1 %then %do;
+			ods excel options(sheet_name="PRO-CTCAE Composite");
+		%end;
 		proc report data=____table_dat_comp;
 			label label = "PRO-CTCAE Composite Item Analysis"
 					Overall_n = 'Overall' 
@@ -654,7 +811,9 @@
 			define label / style(column header)={borderrightcolor=black};
 			define Overall_n / style(column header)={borderrightcolor=black};
 		run;
-		ods excel close;
+		%if &outputfile.=1 %then %do;
+			ods excel close;
+		%end;
 	%end;
 		%else %do;
 			/* ----------------------------------------------------------------------------- */
@@ -726,11 +885,11 @@
 					else output;
 			run;
 			proc sql noprint;
-				select distinct(tranwrd(compbl(&arm_var.), " ", "_"))
+				select distinct(tranwrd(strip(compbl(&arm_var.)), " ", "_"))
 				into : arm_n separated by " "
 				from ____ct4;
 				
-				select distinct(tranwrd(compbl(&arm_var.), " ", "_"))
+				select distinct(tranwrd(strip(compbl(&arm_var.)), " ", "_"))
 				into : arm_rate separated by " "
 				from ____ct5;
 			quit;
@@ -1017,9 +1176,11 @@
 			/* -- Output risk difference tables --- */
 			/* ----------------------------------------------------------------------------- */
 			%if &arm_count. = 2 and &riskdiff. = 1 %then %do;
-				options papersize=(22in 27in);
-				ods excel file="&output_dir./&output_filename..xlsx";	
-				ods excel options(sheet_name="PRO-CTCAE Individual");
+				%if &outputfile.=1 %then %do;
+					options papersize=(22in 27in);
+					ods excel file="&output_dir./&output_filename..xlsx";	
+					ods excel options(sheet_name="PRO-CTCAE Individual");
+				%end;
 				proc report data=____table_dat_indi_rd style(report)=[frame=void rules=group];
 					label label = "PRO-CTCAE Individual Item Analysis" risk_ci_pres = 'Risk difference (95%CI)' 
 							risk_ci_sev = 'Risk difference (95%CI)' &arm_ns_label. &pres_oth_labs. &sev_oth_labs. ;
@@ -1033,8 +1194,10 @@
 					define %sysfunc(scan(&arm_ns.,-1)) / style(column header)={borderrightcolor=black};
 					define risk_ci_pres / center style(column header)={borderrightcolor=black};
 					define risk_ci_sev / center;
-				run;		
-				ods excel options(sheet_name="PRO-CTCAE Composite");	
+				run;
+				%if &outputfile.=1 %then %do;
+					ods excel options(sheet_name="PRO-CTCAE Composite");
+				%end;
 				proc report data=____table_dat_comp_rd style(report)=[frame=void rules=group];
 					label label = "PRO-CTCAE Composite Item Analysis" risk_ci_pres = 'Risk difference (95%CI)' 
 							risk_ci_sev = 'Risk difference (95%CI)' &arm_ns_label. &pres_oth_labs. &sev_oth_labs. ;
@@ -1049,7 +1212,9 @@
 					define risk_ci_pres / center style(column header)={borderrightcolor=black};
 					define risk_ci_sev / center;
 				run;
-				ods excel close;
+				%if &outputfile.=1 %then %do;
+					ods excel close;
+				%end;
 			%end;
 			
 				/* ----------------------------------------------------------------------------- */
@@ -1063,10 +1228,12 @@
 						%else %if %lowcase(%sysfunc(strip("&test."))) = "c" %then %do;
 							%let pv_var = chisqr;
 							%let pv_lab = &pv_var._pres = "Chi Square P" &pv_var._sev = "Chi Square P";
-						%end;			
-					options papersize=(22in 27in);
-					ods excel file="&output_dir./&output_filename..xlsx";			
-					ods excel options(sheet_name="PRO-CTCAE Individual");
+						%end;
+					%if &outputfile.=1 %then %do;
+						options papersize=(22in 27in);
+						ods excel file="&output_dir./&output_filename..xlsx";			
+						ods excel options(sheet_name="PRO-CTCAE Individual");
+					%end;
 					proc report data=____table_dat_indi style(report)=[frame=void rules=group];
 						label label = "PRO-CTCAE Individual Item Analysis" &pv_lab. &arm_ns_label. &pres_oth_labs. &sev_oth_labs. ;
 						column label ("N"  &arm_ns.) 
@@ -1080,7 +1247,9 @@
 						define &pv_var._pres / center style(column header)={font_weight=pv_bold. borderrightcolor=black};
 						define &pv_var._sev / center style(column)={font_weight=pv_bold.};
 					run;
-					ods excel options(sheet_name="PRO-CTCAE Composite");
+					%if &outputfile.=1 %then %do;
+						ods excel options(sheet_name="PRO-CTCAE Composite");
+					%end;
 					proc report data=____table_dat_comp;
 						label label = "PRO-CTCAE Composite Item Analysis" &pv_lab. &arm_ns_label. &pres_oth_labs. &sev_oth_labs.;
 						column label ("N"  &arm_ns.) 
@@ -1094,7 +1263,9 @@
 						define &pv_var._pres / center style(column header)={font_weight=pv_bold. borderrightcolor=black};
 						define &pv_var._sev / center style(column)={font_weight=pv_bold.};
 					run;
-					ods excel close;
+					%if &outputfile.=1 %then %do;
+						ods excel close;
+					%end;
 				%end;
 			%end;
 			
@@ -1105,4 +1276,5 @@
 	proc datasets noprint;
 		delete ____: _SGSRT2_;
 	quit;
+	options &user_notes. &user_mprint. &user_symbolgen. &user_mlogic. &user_mlogicnest.;
 %mend;
