@@ -36,6 +36,10 @@
    |				 Data format should be in 'long' format, where each row/record/observation reflects
    |				 a unique visit/cycle/time point for an individual and each PRO-CTCAE item is a variable/column.   
    |
+   |				ACKNOWLEDGEMENTS
+   |				 Special thanks to Allison Deal, Carolyn Mead-Harvey, Gina Mazza, and Paul Novotny for their
+   |				 help in testing and feature recommendation. 
+   |
    |				
    |				[-]	https://healthcaredelivery.cancer.gov/pro-ctcae/pro-ctcae_english.pdf
    |				[-] Ethan Basch, et al. Development of a Composite Scoring Algorithm for the 
@@ -115,12 +119,12 @@
    | Default   : Risk differences are not reported
    |
    | Name      : type
-   | Type      : max_post_bl = Use subjects' maximum score post baseline visit
+   | Type      : max_post_bl = Use subjects' maximum score post-baseline visit
    |		     bl_adjusted = Use subjects' baseline adjusted score over the study period.
    |				The baseline adjusted score is derived by the following:
-   |					-	If the maximum score over the study period is more severe than the baseline score, 
-   |						then the use maximum score is used as the adjusted score. 
-   |					-	Otherwise, if the maximum score is the same or less serve than the baseline score,
+   |					-	If the maximum score post-baseline is more severe than the baseline score, then 
+   |						the use maximum score post-baseline is used as the adjusted score. 
+   |					-	Otherwise, if the maximum score post-baseline is the same or less serve than the baseline score,
    |						then zero (0) is used as the adjusted score.
    | Default   : bl_adjusted = Use subjects' baseline adjusted score over the study period.
    | 
@@ -1104,7 +1108,6 @@
 					from ____rd_pres_conts
 					where substr(name, length(name)-4, 5) = "_rate";
 				quit;
-				%put "&rd_sev_renm.";
 				data ____item_sev_rd;
 					set ____item_sev_rd0 (rename = (risk_ci = risk_ci_sev &rd_sev_renm.));
 				run;
