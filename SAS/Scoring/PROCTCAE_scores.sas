@@ -34,7 +34,10 @@
    |				EXTPECTED DATA FORMAT
    |				 Data format should be in 'long' format, where each PRO-CTCAE item is a variable/column.
    |				 All PRO-CTCAE variables must either be numeric or character when applying this macro.
-   |					
+   |
+   |				ACKNOWLEDGEMENTS
+   |				 Special thanks to Allison Deal, Carolyn Mead-Harvey, Gina Mazza, and Paul Novotny for their
+   |				 help in testing and feature recommendation. 
    |					
    *------------------------------------------------------------------------------------------*
    | OPERATING SYSTEM COMPATIBILITY
@@ -51,9 +54,6 @@
    
 	* -- Required parameters;
 	%PROCTCAE_scores(dsn=);
-	
-	* -- Required and optional parameters;
-	%PROCTCAE_scores(dsn=, impute=, dsn_out=, composites=, reformat=);
 	
    |
    *------------------------------------------------------------------------------------------*
