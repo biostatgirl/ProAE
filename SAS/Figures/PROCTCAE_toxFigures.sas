@@ -1,20 +1,20 @@
 
  /*-------------------------------------------------------------------------------------------*
-   | MACRO NAME	 : PROCTCAE_toxFigures
-   | VERSION	 : 1.0.0
-   | SHORT DESC  : Creates PRO-CTCAE severity frequency distribution figures for individual 
-   |			   survey items and composite scores
-   |			
+   | MACRO NAME	 :	PROCTCAE_toxFigures
+   | VERSION	 :	1.0.0
+   | SHORT DESC  :	Creates PRO-CTCAE severity frequency distribution figures for individual 
+   |			  	survey items and composite scores
+   |	
    *------------------------------------------------------------------------------------------*
-   | AUTHORS  	 : Blake T Langlais, Amylou C Dueck
+   | AUTHORS  	 :	Blake T Langlais, Amylou C Dueck
    *------------------------------------------------------------------------------------------*
    | 
    *------------------------------------------------------------------------------------------*
-   | PURPOSE	 : This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
-   |			   then create severity frequency distribution figures for individual and 
-   |			   composite scores, at each time point as well as for the maximum post baseline
-   |			   and baseline adjusted scores. These figures can be outputted as individual JPEG 
-   |			   image files to a user-specified directory.
+   | PURPOSE	 :	This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
+   |				then create severity frequency distribution figures for individual and 
+   |				composite scores, at each time point as well as for the maximum post baseline
+   |				and baseline adjusted scores. These figures can be outputted as individual JPEG 
+   |				image files to a user-specified directory.
    |				   
    |			   	PRO-CTCAE variable names MUST conform to a pre-specified naming structure. PRO-CTCAE 
    |			   	variable names are made up of FOUR components: 1)'PROCTCAE', 2) number [1,2,3, ..., i, ..., 80], 
@@ -36,6 +36,10 @@
    |				EXTPECTED DATA FORMAT
    |				 Data format should be in 'long' format, where each row/record/observation reflects
    |				 a unique visit/cycle/time point for an individual and each PRO-CTCAE item is a variable/column.   
+   |
+   |				ACKNOWLEDGEMENTS
+   |				 Special thanks to Allison Deal, Carolyn Mead-Harvey, Gina Mazza, and Paul Novotny for their
+   |				 help in testing and feature recommendation. 
    |
    |				
    |				[-]	https://healthcaredelivery.cancer.gov/pro-ctcae/pro-ctcae_english.pdf
@@ -129,6 +133,11 @@
    | Purpose   : Label frequency bars with sample size (n) or y-axis percentage
    | Default   : 0 = no bar labels
    |
+   | Name      : colors
+   | Type      : 1 = Blue and red color shading, 2 = qualitative color shades, 3 = black and white 
+   | Purpose   : Specify the coloring of sypmtom grades within frequency bars
+   | Default   : 1 =  Blue and red color shading
+   |
    | Name      : x_label
    | Type      : Character string (unquoted)
    | Purpose   : Label for the x axis of the plot
@@ -193,8 +202,7 @@
    *------------------------------------------------------------------------------------------*/
 
 %macro PROCTCAE_toxFigures(dsn, id_var, arm_var, cycle_var, cycle_limit, cycle_fmt, baseline_val, summary_only, plot_limit, 
-						   height, width, label, x_label,footnote_size, output_dir, dpi, debug, zero_display, proctcae_table, 
-						   coldat, colors);
+						   height, width, label, x_label, footnote_size, output_dir, dpi, debug, zero_display, proctcae_table, colors);
 	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Allowance for debugging --- */
@@ -610,11 +618,6 @@
 				fillcolor='CX000000' ;id='level' ;linecolor='CX000000' ;value='3' ; output;
 			run;
 		%end;
-	%if %length(&coldat.) ^= 0 %then %do;
-		data ____attrs1;
-			set &coldat.;
-		run;
-	%end;
 	%if &zero_display.=0 %then %do;
 	 	data ____attrs1;
 			set ____attrs1;
@@ -848,11 +851,12 @@
 				from ____dsn_out_coding0
 				group by &id_var., &arm_var.
 				order by &id_var., &cycle_var.;
-			quit;
+			quit;			
 			data ____dsn_out_coding2;
 				set ____dsn_out_coding1;
 				by &id_var.;
 				if last.&id_var.;
+				if max_post_bl =. then bl_adjusted =.; /***************** astrxx */
 				drop &cycle_var. &var_a.;
 			run;
 			proc sort data=____dsn_out_coding2;
@@ -964,6 +968,7 @@
 				set ____dsn_out_coding1;
 				by &id_var.;
 				if last.&id_var.;
+				if max_post_bl =. then bl_adjusted =.; /***************** astrxx */
 				drop &cycle_var. &var_b.;
 			run;
 			proc sort data=____dsn_out_coding2;
@@ -1073,6 +1078,7 @@
 				set ____dsn_out_coding1;
 				by &id_var.;
 				if last.&id_var.;
+				if max_post_bl =. then bl_adjusted =.; /***************** astrxx */
 				drop &cycle_var. &var_c.;
 			run;
 			proc sort data=____dsn_out_coding2;
@@ -1173,7 +1179,8 @@
 						when &cycle_var. ^= &baseline_val. and base_score = . then .
 						when &cycle_var. ^= &baseline_val. and base_score >= max(&var_comp.) then  0
 						when &cycle_var. ^= &baseline_val. and base_score < max(&var_comp.) then max(&var_comp.)
-						end) as bl_adjusted						
+						end) as bl_adjusted		
+						
 				from ____dsn_out_coding0
 				group by &id_var., &arm_var.
 				order by &id_var., &cycle_var.;
@@ -1182,6 +1189,7 @@
 				set ____dsn_out_coding1;
 				by &id_var.;
 				if last.&id_var.;
+				if max_post_bl =. then bl_adjusted =.; /***************** astrxx */
 				drop &cycle_var. &var_comp.;
 			run;
 			proc sort data=____dsn_out_coding2;
@@ -1367,6 +1375,7 @@
 		proc sort data=____together4;
 			by &cycle_var. name descending &arm_var. descending lab;
 		run;
+		
 		data ____together5_0;
 			set ____together4;
 			by &cycle_var. name;
@@ -1562,13 +1571,13 @@
 			  ;
 		%end;
 		%if &label.=1 %then %do;
-			footnote5 height=&footnote_size.pt justify=LEFT "Column labels (n) show the number of subjects with an observed symptom grade.";
+			footnote5 height=&footnote_size.pt justify=LEFT "Column labels (n) show the number of subjects with an observed symptom score or grade.";
 		%end;
 			%else %if &label.=2 or &label.=3 or &label.=4 or &label.=5 %then %do;
-				footnote5 height=&footnote_size.pt justify=LEFT "Column labels &foot_symbol. show the &foot_type. of subjects with symptom grade &foot_grade. or greater.";
+				footnote5 height=&footnote_size.pt justify=LEFT "Column labels &foot_symbol. show the &foot_type. of subjects with symptom score or grade &foot_grade. or greater.";
 			%end;
 		footnote6 height=&footnote_size.pt justify=LEFT "*Maximum score or grade reported post-baseline per patient.";
-		footnote7 height=&footnote_size.pt justify=LEFT "**Maximum score or grade reported post-baseline per patient when including only scores which were worse than the patient's baseline score.";
+		footnote7 height=&footnote_size.pt justify=LEFT "**Maximum score or grade reported post-baseline per patient when including only scores that were worse than the patient's baseline score.";
 		%if %length(&output_dir.)^=0 %then %do;
 			ods listing gpath="&output_dir." image_dpi=&dpi.;
 		%end;
