@@ -1,7 +1,7 @@
                                                                                                                                     
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : 	PROCTCAE_toxTables
-   | VERSION	 : 	1.0.0
+   | VERSION	 : 	1.0.1
    | SHORT DESC  : 	Creates toxicity tables for individual and composite PRO-CTCAE survey items.
    |
    *------------------------------------------------------------------------------------------*
@@ -594,10 +594,14 @@
 			group by &id_var.
 			order by &id_var., &cycle_var.;
 		quit;
-		data ____dsn_out_coding2;
-			set ____dsn_out_coding1(keep = &id_var. &type.);
+		data ____dsn_out_coding2_0;
+			set ____dsn_out_coding1;
 			by &id_var.;
 			if last.&id_var.;
+			if max_post_bl =. then bl_adjusted =.; /***************** astrxx */
+		run;
+		data ____dsn_out_coding2;
+			set ____dsn_out_coding2_0(keep = &id_var. &type.);
 			rename &type. = &var_i.;
 		run;
 		data ____id_score;
