@@ -1,18 +1,18 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 :	PROCTCAE_toxFigures
-   | VERSION	 :	1.0.0
+   | VERSION	 :	1.0.1
    | SHORT DESC  :	Creates PRO-CTCAE severity frequency distribution figures for individual 
-   |			  	survey items and composite scores
+   |			  	survey items and composite grades
    |	
    *------------------------------------------------------------------------------------------*
-   | AUTHORS  	 :	Blake T Langlais, Amylou C Dueck
+   | AUTHORS  	 :	Blake T Langlais, Amylou C Dueck 
    *------------------------------------------------------------------------------------------*
    | 
    *------------------------------------------------------------------------------------------*
    | PURPOSE	 :	This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
    |				then create severity frequency distribution figures for individual and 
-   |				composite scores, at each time point as well as for the maximum post baseline
+   |				composite grades, at each time point as well as for the maximum post baseline
    |				and baseline adjusted scores. These figures can be outputted as individual JPEG 
    |				image files to a user-specified directory.
    |				   
@@ -24,14 +24,14 @@
    |             		EX1: Question 1 of PRO-CTCAE should be: PROCTCAE_1A_SCL
    |             		EX2: Question 48 of PRO-CTCAE should be: PROCTCAE_48A_SCL, PROCTCAE_48B_SCL, PROCTCAE_48C_SCL
    |			
-   |				Similarly, composite score variable names are expected to be named as 'PROCTCAE', then the
+   |				Similarly, composite grade variable names are expected to be named as 'PROCTCAE', then the
    |				survey item number, followed by 'COMP'. Again seperated by an underscore (_).
-   |					EX1: Question 8 composite score should be named as PROCTCAE_8_COMP
-   |					EX2: Question 48 composite score should be named as PROCTCAE_48_COMP
+   |					EX1: Question 8 composite grade should be named as PROCTCAE_8_COMP
+   |					EX2: Question 48 composite grade should be named as PROCTCAE_48_COMP
    |
-   |				PRO-CTCAE severity, interference, frequency items and subsequent composite scores
+   |				PRO-CTCAE severity, interference, frequency items and subsequent composite grades
    |				are used to construct these figures. Survey items with yes/no responses are not.
-   |				See available accompanying SAS macro for more on constructing composite scores (PROCTCAE_scores).
+   |				See available accompanying SAS macro for more on constructing composite grades (PROCTCAE_scores).
    |
    |				EXTPECTED DATA FORMAT
    |				 Data format should be in 'long' format, where each row/record/observation reflects
@@ -43,10 +43,13 @@
    |
    |				
    |				[-]	https://healthcaredelivery.cancer.gov/pro-ctcae/pro-ctcae_english.pdf
-   |				[-] Ethan Basch, et al. Development of a Composite Scoring Algorithm for the 
+   |				[-] Ethan Basch, et al. Development of a Composite Grading Algorithm for the 
    |					National Cancer Institute’s Patient-Reported Outcomes version of the Common 
    |					Terminology Criteria for Adverse Events (PRO-CTCAE). ISOQOL 2019.
-   |					
+   |				[-] Basch E, et al. Composite Grading Algorithm for the National Cancer Institute’s 
+   |					Patient-Reported Outcomes version of the Common Terminology Criteria for Adverse 
+   |					Events (PRO-CTCAE). Clinical Trials 2020.
+   |
    *------------------------------------------------------------------------------------------*
    | OPERATING SYSTEM COMPATIBILITY
    |
@@ -129,8 +132,7 @@
    |			 3 = sample size (n) within each cycle with severe symptoms (symptom grade >= 3)
    |			 4 = percent of subjects (%) within each cycle with present symptoms (symptom grade > 0)
    |			 5 = percent of subjects (%) within each cycle with severe symptoms (symptom grade >= 3)
-   |			 percent = percent shown on the y-axis (either )
-   | Purpose   : Label frequency bars with sample size (n) or y-axis percentage
+   | Purpose   : Label frequency bars with sample size (n) or percent (%) shown on the y-axis (either )
    | Default   : 0 = no bar labels
    |
    | Name      : colors
@@ -352,8 +354,21 @@
 		 fmt_name='yn_3_fmt' ;name='PROCTCAE_79A_IND' ;short_label='Injection Site Reaction Presence' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_80A_SCL' ;short_label='Body Odor Severity' ; output;
 	 run;
-
-
+						   
+	/* ---------------------------------------------------------------------------------------------------- */		
+	/* --- Provide the user with the PROCTCAE_table reference dataset --- */
+	/* ---------------------------------------------------------------------------------------------------- */	
+	%if %length(&dsn.)=0 and %length(&id_var.)=0 and %length(&arm_var.)=0 and %length(&cycle_var.)=0 and
+		%length(&cycle_limit.)=0 and %length(&cycle_fmt.)=0 and %length(&baseline_val.)=0 and %length(&summary_only.)=0 and
+		%length(&plot_limit.)=0 and %length(&height.)=0 and %length(&width.)=0 and %length(&label.)=0 and
+		%length(&x_label.)=0 and %length(&footnote_size.)=0 and %length(&output_dir.)=0 and %length(&dpi.)=0 and
+		%length(&zero_display.)=0 and %length(&colors.)=0 and &proctcae_table.^=0  %then %do;
+		data PROCTCAE_table;
+			set ____proctcae_vars (drop=fmt_name);
+		run;
+    	%goto exit;
+    %end;
+    
  	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Error checks (1 of 2) --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
@@ -1653,6 +1668,7 @@
 	/* ------------------------------ */
 	/* --- Clean up ----------------- */
 	/* ------------------------------ */
+	ods graphics / reset;
 	%exit:
 	proc datasets noprint;
 		delete _sgsrt2_ ____:;
