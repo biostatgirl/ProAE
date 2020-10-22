@@ -32,7 +32,7 @@
    |				respective PRO-CTCAE item groups are created and named as PROCTCAE_##_COMP.
    |
    |				[1]	https://healthcaredelivery.cancer.gov/pro-ctcae/pro-ctcae_english.pdf
-   |				[2] Ethan Basch, et al. Development of a Composite Scoring Algorithm for the 
+   |				[2] Ethan Basch, et al. Development of a Composite Grading Algorithm for the 
    |					National Cancer Institute’s Patient-Reported Outcomes version of the Common 
    |					Terminology Criteria for Adverse Events (PRO-CTCAE). ISOQOL 2019.
    |				[3] Basch E, et al. Composite Grading Algorithm for the National Cancer Institute’s 
