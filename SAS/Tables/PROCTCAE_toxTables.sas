@@ -1,7 +1,7 @@
                                                                                                                                     
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : 	PROCTCAE_toxTables
-   | VERSION	 : 	1.0.1
+   | VERSION	 : 	1.0.2
    | SHORT DESC  : 	Creates toxicity tables for individual and composite PRO-CTCAE survey items.
    |
    *------------------------------------------------------------------------------------------*
@@ -11,7 +11,7 @@
    *------------------------------------------------------------------------------------------*
    | PURPOSE	 : 	This macro takes in a SAS data set with numeric PRO-CTCAE survey variables 
    |			   	then outputs an Excel data file with toxicity tables for individual survey items and 
-   |			   	composite scores. Rates of symptomatic adverse events >0 and >= 3
+   |			   	composite grades. Rates of symptomatic adverse events >0 and >= 3
    |			   	are compared between/among arms using chi sqaure or Fisher's exact tests.
    |			   	Risk differences between two arms are also available in lieu of statistical tests.
    |				   
@@ -22,15 +22,20 @@
    |               	must be delimitated by an underscore (_) 
    |             		EX1: Question 1 of PRO-CTCAE should be: PROCTCAE_1A_SCL
    |             		EX2: Question 48 of PRO-CTCAE should be: PROCTCAE_48A_SCL, PROCTCAE_48B_SCL, PROCTCAE_48C_SCL
-   |			
-   |				Similarly, composite score variable names are expected to be named as 'PROCTCAE', then the
-   |				survey item number, followed by 'COMP'. Again seperated by an underscore (_).
-   |					EX1: Question 8 composite score should be named as PROCTCAE_8_COMP
-   |					EX2: Question 48 composite score should be named as PROCTCAE_48_COMP
    |
-   |				PRO-CTCAE severity, interference, frequency items and subsequent composite scores
+   |				To help with this naming structure, a reference SAS dataset with these variable names and 
+   |				their respective labels can be produced here if the user runs this macro with no specified 
+   |				parameters. The SAS dataset created is named PROCTCAE_table. For this, just run the code below:
+   |					%PROCTCAE_toxTables;
+   |
+   |				Similarly, composite grade variable names are expected to be named as 'PROCTCAE', then the
+   |				survey item number, followed by 'COMP'. Again seperated by an underscore (_).
+   |					EX1: Question 8 composite grade should be named as PROCTCAE_8_COMP
+   |					EX2: Question 48 composite grade should be named as PROCTCAE_48_COMP
+   |
+   |				PRO-CTCAE severity, interference, frequency items and subsequent composite grades
    |				are used to construct these toxicity tables. Survey items with yes/no responses are not.
-   |				See available accompanying SAS macro for more on constructing composite scores (PROCTCAE_scores).
+   |				See available accompanying SAS macro for more on constructing composite grades (PROCTCAE_scores).
    |
    |				EXTPECTED DATA FORMAT
    |				 Data format should be in 'long' format, where each row/record/observation reflects
@@ -314,6 +319,19 @@
 		 fmt_name='yn_3_fmt' ;name='PROCTCAE_79A_IND' ;short_label='Injection Site Reaction Presence' ; output;
 		 fmt_name='sev_5_fmt' ;name='PROCTCAE_80A_SCL' ;short_label='Body Odor Severity' ; output;
 	 run;
+
+	/* ---------------------------------------------------------------------------------------------------- */		
+	/* --- Provide the user with the PROCTCAE_table reference dataset --- */
+	/* ---------------------------------------------------------------------------------------------------- */	
+	%if %length(&dsn.)=0 and %length(&id_var.)=0 and %length(&arm_var.)=0 and %length(&cycle_var.)=0 and 
+			%length(&baseline_val.)=0 and %length(&cycle_limit.)=0 and %length(&type.)=0 and %length(&test.)=0 and 
+			%length(&fmt_pvalues.)=0 and %length(&riskdiff.)=0 and %length(&output_dir.)=0 and
+			%length(&output_filename.)=0 and &proctcae_table.^=0  %then %do;
+		data PROCTCAE_table;
+			set ____proctcae_vars (drop=fmt_name);
+		run;
+    	%goto exit;
+    %end;
 
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Error checks (1 of 2) --- */
