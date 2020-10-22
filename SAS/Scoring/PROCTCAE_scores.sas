@@ -482,7 +482,7 @@
 	/* --- Provide the user with the PROCTCAE_table reference dataset --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
 	%if %length(&dsn.)=0 and %length(&impute.)=0 and %length(&dsn_out.)=0 and %length(&composites.)=0 and
-			 %length(&reformat.) and %length(&debug.) and &PROCTCAE_table.^=0  %then %do;
+			 %length(&reformat.)=0 and &PROCTCAE_table.^=0  %then %do;
 		data PROCTCAE_table;
 			set ____proctcae_vars (drop=fmt_name);
 		run;
