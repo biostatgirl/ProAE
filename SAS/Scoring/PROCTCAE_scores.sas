@@ -1,8 +1,8 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 :	PROCTCAE_scores
-   | VERSION	 :	1.0.0
-   | SHORT DESC  :	Recodes PRO-CTCAE survey responses and calculates composite scores
+   | VERSION	 :	1.0.1
+   | SHORT DESC  :	Recodes PRO-CTCAE survey responses and calculates composite grades
    | 			
    *------------------------------------------------------------------------------------------*
    | AUTHORS  	 :	Blake T Langlais, Amylou C Dueck
@@ -22,14 +22,22 @@
    |                  EX2: Question 48 of PRO-CTCAE should be: PROCTCAE_48A_SCL, PROCTCAE_48B_SCL, PROCTCAE_48C_SCL
    |                  EX3: Question 73 of PRO-CTCAE should be: PROCTCAE_73A_IND
    |				
-   |			   COMPOSITE SCORING
-   |				This macro also constructs PRO-CTCAE composite scoring [2]. Composite score variables for 
+   |				To help with this naming structure, a reference SAS dataset with these variable names and 
+   |				their respective labels can be produced here if the user runs this macro with no specified 
+   |				parameters. The SAS dataset created is named PROCTCAE_table. For this, just run the code below:
+   |					%PROCTCAE_scores;
+   |
+   |			   COMPOSITE MAPPING
+   |				This macro also constructs PRO-CTCAE composite mapping [2,3]. Composite grade variables for 
    |				respective PRO-CTCAE item groups are created and named as PROCTCAE_##_COMP.
    |
    |				[1]	https://healthcaredelivery.cancer.gov/pro-ctcae/pro-ctcae_english.pdf
    |				[2] Ethan Basch, et al. Development of a Composite Scoring Algorithm for the 
    |					National Cancer Institute’s Patient-Reported Outcomes version of the Common 
    |					Terminology Criteria for Adverse Events (PRO-CTCAE). ISOQOL 2019.
+   |				[3] Basch E, et al. Composite Grading Algorithm for the National Cancer Institute’s 
+   |					Patient-Reported Outcomes version of the Common Terminology Criteria for Adverse 
+   |					Events (PRO-CTCAE). Clinical Trials; 2020.
    |					
    |				EXTPECTED DATA FORMAT
    |				 Data format should be in 'long' format, where each PRO-CTCAE item is a variable/column.
@@ -67,9 +75,9 @@
    | OPTIONAL PARAMETERS
    |
    | Name      : reformat
-   | Type      : 1 = Reformat PROCTCAE text responses to numeric grades
+   | Type      : 1 = Reformat PROCTCAE text responses to numeric scores
    |			 0 = Do not reformat (PROCTCAE must be numeric)
-   | Purpose   : Reformat PROCTCAE text responses to numeric grades
+   | Purpose   : Reformat PROCTCAE text responses to numeric scores
    | Default   : 0 (Will not reformat text responses)
    |    
    | Name      : impute
@@ -80,9 +88,9 @@
    | Default   : 0 (Will not apply zero-imputation)
    |
    | Name      : composites
-   | Type      : 1 = Calculate composite scores using available PROCTCAE variables in DSNWill not apply zero-imputation
-   |			 0 = Will not calculate composite scores
-   | Default   : 0 (Will not calculate composite scores)   
+   | Type      : 1 = Calculate composite grades using available PROCTCAE variables in DSN
+   |			 0 = Will not calculate composite grades
+   | Default   : 0 (Will not calculate composite grades)   
    |
    | Name      : dsn_out 
    | Type      : SAS data set name
@@ -470,9 +478,20 @@
 		%let reformat = 0;
 	%end;
 	
+	/* ---------------------------------------------------------------------------------------------------- */		
+	/* --- Provide the user with the PROCTCAE_table reference dataset --- */
+	/* ---------------------------------------------------------------------------------------------------- */	
+	%if %length(&dsn.)=0 and %length(&impute.)=0 and %length(&dsn_out.)=0 and %length(&composites.)=0 and
+			 %length(&reformat.) and %length(&debug.) and &PROCTCAE_table.^=0  %then %do;
+		data PROCTCAE_table;
+			set ____proctcae_vars (drop=fmt_name);
+		run;
+    	%goto exit;
+    %end;
+	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Error checks (1 of 3) --- */
-	/* ---------------------------------------------------------------------------------------------------- */	
+	/* ---------------------------------------------------------------------------------------------------- */
 	%if %length(&dsn.)=0 %then %do;
 		data _null_;
 			put "ER" "ROR: No dataset was provided.";
@@ -936,7 +955,7 @@
 	run;
 	
 	/* --------------------------------------------------------------------------------------------- */
-	/* --- Composite scoring */
+	/* --- Composite grading */
 	/* --------------------------------------------------------------------------------------------- */
 	%if &composites. = 1 %then %do;
 		data ____conts0;
@@ -1025,7 +1044,7 @@
 			%do %while(&j. <= &max_rank.);
 			
 				/* --------------------------------------------------------------------------------------------- */
-				/* --- Get the each of the ith PROCTCAE A/B/C field names from the ref list to calc comp score - */
+				/* --- Get the each of the ith PROCTCAE A/B/C field names from the ref list to calc comp grade - */
 				/* --------------------------------------------------------------------------------------------- */
 				proc transpose data=____vars_ref (where=(rank = &j.)) out=____vars_ref_trans(where=(_name_ ^ in ("rank")));
 					var _all_;
@@ -1039,7 +1058,7 @@
 				run;
 	
 				/* --------------------------------------------------------------------------------------------- */
-				/* --- Check if dsn has each of the required fields to calc comp score --- */
+				/* --- Check if dsn has each of the required fields to calc comp grades --- */
 				/* --------------------------------------------------------------------------------------------- */
 				data ____check_list(keep=ques);
 					set ____vars_ref_trans(where=(_name_^="qnum"));
@@ -1054,7 +1073,7 @@
 				quit;
 	
 				/* --------------------------------------------------------------------------------------------- */
-				/* --- If dsn has all require fields to calc comp score then create and apply comp coding --- */
+				/* --- If dsn has all require fields to calc comp grade then create and apply comp coding --- */
 				/* --------------------------------------------------------------------------------------------- */
 				%if &all_ques_flag. = 0  %then %do;
 					data ____comps_asd;
@@ -1093,15 +1112,15 @@
 					data &dsn_out.;
 						set &dsn_out.;
 						if nmiss(of &frq. &sev. &int.) = 0 then do;
-							/* -- If a freq item included in the composite and is 0, then comp score = 0 */
+							/* -- If a freq item included in the composite and is 0, then comp grade = 0 */
 							%if %length(&frq.)>0 %then %do;
 								if &frq. = 0  then PROCTCAE_&qnum._COMP = 0;
 							%end;
-								/* -- If no freq item included, but there is a sev item in the composite and is 0, then comp score = 0 */
+								/* -- If no freq item included, but there is a sev item in the composite and is 0, then comp grade = 0 */
 								%else %if %length(&sev.)>0 %then %do;
 									if &sev. = 0  then PROCTCAE_&qnum._COMP = 0;
 								%end;
-									/* -- If no freq/sev item included (i.e. only an int item), and the int item is 0, then comp score = 0 */
+									/* -- If no freq/sev item included (i.e. only an int item), and the int item is 0, then comp grade = 0 */
 									%else %if %length(&int.)>0 %then %do;
 										if &int. = 0  then PROCTCAE_&qnum._COMP = 0;
 									%end;
