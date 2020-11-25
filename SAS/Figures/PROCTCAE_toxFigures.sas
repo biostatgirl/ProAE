@@ -1,7 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 :	PROCTCAE_toxFigures
-   | VERSION	 :	1.0.1
+   | VERSION	 :	1.0.2
    | SHORT DESC  :	Creates PRO-CTCAE severity frequency distribution figures for individual 
    |			  	survey items and composite grades
    |	
@@ -28,6 +28,11 @@
    |				survey item number, followed by 'COMP'. Again seperated by an underscore (_).
    |					EX1: Question 8 composite grade should be named as PROCTCAE_8_COMP
    |					EX2: Question 48 composite grade should be named as PROCTCAE_48_COMP
+   |
+   |				To help with this naming structure, a reference SAS dataset with these variable names and 
+   |				their respective labels can be produced here if the user runs this macro with no specified 
+   |				parameters. The SAS dataset created is named PROCTCAE_table. For this, just run the code below:
+   |					%PROCTCAE_toxFigures;
    |
    |				PRO-CTCAE severity, interference, frequency items and subsequent composite grades
    |				are used to construct these figures. Survey items with yes/no responses are not.
@@ -206,6 +211,33 @@
 %macro PROCTCAE_toxFigures(dsn, id_var, arm_var, cycle_var, cycle_limit, cycle_fmt, baseline_val, summary_only, plot_limit, 
 						   height, width, label, x_label, footnote_size, output_dir, dpi, debug, zero_display, proctcae_table, colors);
 	
+	
+	%if %length(&dsn.)=0 and 
+			%length(&id_var.)=0 and 
+			%length(&arm_var.)=0 and 
+			%length(&cycle_var.)=0 and
+			%length(&cycle_limit.)=0 and 
+			%length(&cycle_fmt.)=0 and 
+			%length(&baseline_val.)=0 and 
+			%length(&summary_only.)=0 and
+			%length(&plot_limit.)=0 and 
+			%length(&height.)=0 and 
+			%length(&width.)=0 and 
+			%length(&label.)=0 and
+			%length(&x_label.)=0 and 
+			%length(&footnote_size.)=0 and 
+			%length(&output_dir.)=0 and 
+			%length(&dpi.)=0 and
+			%length(&debug.)=0 and 
+			%length(&zero_display.)=0 and 
+			%length(&colors.)=0 and 
+			%length(&proctcae_table.)=0  %then %do;
+		%let print_proctcae_quit = 1;
+	%end;
+		%else %do;
+			%let print_proctcae_quit = 0;
+		%end;
+	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Allowance for debugging --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
@@ -358,13 +390,10 @@
 	/* ---------------------------------------------------------------------------------------------------- */		
 	/* --- Provide the user with the PROCTCAE_table reference dataset --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
-	%if %length(&dsn.)=0 and %length(&id_var.)=0 and %length(&arm_var.)=0 and %length(&cycle_var.)=0 and
-		%length(&cycle_limit.)=0 and %length(&cycle_fmt.)=0 and %length(&baseline_val.)=0 and %length(&summary_only.)=0 and
-		%length(&plot_limit.)=0 and %length(&height.)=0 and %length(&width.)=0 and %length(&label.)=0 and
-		%length(&x_label.)=0 and %length(&footnote_size.)=0 and %length(&output_dir.)=0 and %length(&dpi.)=0 and
-		%length(&zero_display.)=0 and %length(&colors.)=0 and &proctcae_table.^=0  %then %do;
+	%if &print_proctcae_quit.=1  %then %do;
 		data PROCTCAE_table;
 			set ____proctcae_vars (drop=fmt_name);
+			putlog @1 name= @26 short_label=;
 		run;
     	%goto exit;
     %end;
