@@ -497,6 +497,7 @@
 	%if &print_proctcae_quit.=1  %then %do;
 		data PROCTCAE_table;
 			set ____proctcae_vars (drop=fmt_name);
+			putlog @1 name= @26 short_label=;
 		run;
     	%goto exit;
     %end;
