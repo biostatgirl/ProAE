@@ -1,14 +1,14 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 :	PROCTCAE_scores
-   | VERSION	 :	1.0.1
+   | VERSION	 :	1.0.2
    | SHORT DESC  :	Recodes PRO-CTCAE survey responses and calculates composite grades
    | 			
    *------------------------------------------------------------------------------------------*
    | AUTHORS  	 :	Blake T Langlais, Amylou C Dueck
    *------------------------------------------------------------------------------------------*
    |				
-   *------------------------------------------------------------------------------------------*
+   *------------------------------------------------------------------------------------------* 
    | PURPOSE	 : RECODING
    |			   	This macro takes in a SAS data set with PRO-CTCAE [1] survey text fields/responses 
    |               	and returns a SAS data set with appropriate numerical recoding. This macro 
@@ -132,7 +132,20 @@
    *------------------------------------------------------------------------------------------*/
 
 %macro PROCTCAE_scores(dsn, impute, dsn_out, composites, reformat, debug, proctcae_table);
-
+	
+	%if %length(&dsn.)=0 and 
+			%length(&impute.)=0 and 
+			%length(&dsn_out.)=0 and 
+			%length(&composites.)=0 and
+			%length(&reformat.)=0 and 
+			%length(&debug.)=0 and 
+			%length(&proctcae_table.)=0  %then %do;
+		%let print_proctcae_quit = 1;
+	%end;
+		%else %do;
+			%let print_proctcae_quit = 0;
+		%end;
+	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Allowance for debugging --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
@@ -481,13 +494,14 @@
 	/* ---------------------------------------------------------------------------------------------------- */		
 	/* --- Provide the user with the PROCTCAE_table reference dataset --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
-	%if %length(&dsn.)=0 and %length(&impute.)=0 and %length(&dsn_out.)=0 and %length(&composites.)=0 and
-			 %length(&reformat.)=0 and &PROCTCAE_table.^=0  %then %do;
+	%if &print_proctcae_quit.=1  %then %do;
 		data PROCTCAE_table;
 			set ____proctcae_vars (drop=fmt_name);
 		run;
     	%goto exit;
     %end;
+ 	
+
 	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Error checks (1 of 3) --- */
