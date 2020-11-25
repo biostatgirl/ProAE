@@ -1,7 +1,7 @@
                                                                                                                                     
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : 	PROCTCAE_toxTables
-   | VERSION	 : 	1.0.2
+   | VERSION	 : 	1.0.3
    | SHORT DESC  : 	Creates toxicity tables for individual and composite PRO-CTCAE survey items.
    |
    *------------------------------------------------------------------------------------------*
@@ -175,6 +175,27 @@
 %macro PROCTCAE_toxTables(dsn, id_var, arm_var, cycle_var, baseline_val, cycle_limit, type, test, 
 							fmt_pvalues, riskdiff, output_dir, output_filename, debug, proctcae_table);
 	
+	
+	%if %length(&dsn.)=0 and 
+			%length(&id_var.)=0 and 
+			%length(&arm_var.)=0 and 
+			%length(&cycle_var.)=0 and 
+			%length(&baseline_val.)=0 and 
+			%length(&cycle_limit.)=0 and 
+			%length(&type.)=0 and 
+			%length(&test.)=0 and 
+			%length(&fmt_pvalues.)=0 and 
+			%length(&riskdiff.)=0 and 
+			%length(&output_dir.)=0 and
+			%length(&output_filename.)=0 and 
+			%length(&debug.)=0 and 
+			%length(&proctcae_table.)=0  %then %do;
+		%let print_proctcae_quit = 1;
+	%end;
+		%else %do;
+			%let print_proctcae_quit = 0;
+		%end;  
+	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Allowance for debugging --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
@@ -327,16 +348,14 @@
 	/* ---------------------------------------------------------------------------------------------------- */		
 	/* --- Provide the user with the PROCTCAE_table reference dataset --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
-	%if %length(&dsn.)=0 and %length(&id_var.)=0 and %length(&arm_var.)=0 and %length(&cycle_var.)=0 and 
-			%length(&baseline_val.)=0 and %length(&cycle_limit.)=0 and %length(&type.)=0 and %length(&test.)=0 and 
-			%length(&fmt_pvalues.)=0 and %length(&riskdiff.)=0 and %length(&output_dir.)=0 and
-			%length(&output_filename.)=0 and &proctcae_table.^=0  %then %do;
+	%if &print_proctcae_quit.=1  %then %do;
 		data PROCTCAE_table;
 			set ____proctcae_vars (drop=fmt_name);
+			putlog @1 name= @26 short_label=;
 		run;
     	%goto exit;
     %end;
-
+    
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Error checks (1 of 2) --- */
 	/* ---------------------------------------------------------------------------------------------------- */	
