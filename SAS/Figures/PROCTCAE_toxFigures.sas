@@ -1,7 +1,7 @@
 
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 :	PROCTCAE_toxFigures
-   | VERSION	 :	1.0.2
+   | VERSION	 :	1.0.3
    | SHORT DESC  :	Creates PRO-CTCAE severity frequency distribution figures for individual 
    |			  	survey items and composite grades
    |	
@@ -585,6 +585,9 @@
 			%end;
 		format &cycle_var. _cyclefmt_.;
 	run;
+	proc sort data=____&dsn.;
+		by &id_var. &cycle_var.;
+	run;
 	%if &proctcae_table.=1 %then %do;
 		data PROCTCAE_table;
 			set ____proctcae_vars (drop=fmt_name);
@@ -749,11 +752,11 @@
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Error checks (2 of 2) --- */
 	/* ---------------------------------------------------------------------------------------------------- */
-	proc sort data=&dsn.(keep=&id_var. &cycle_var.) out=_null_ nodupkey dupout=____dup_check0;
+	proc sort data=____&dsn.(keep=&id_var. &cycle_var.) out=_null_ nodupkey dupout=____dup_check0;
 		by &id_var. &cycle_var.;
 	run;
 	data ____dup_check;
-		merge &dsn.(in=a keep=&id_var. &cycle_var.) ____dup_check0 (in=b);
+		merge ____&dsn.(in=a keep=&id_var. &cycle_var.) ____dup_check0 (in=b);
 		by &id_var. &cycle_var.;
 		if b;
 	run;
