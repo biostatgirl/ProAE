@@ -1,7 +1,7 @@
                                                                                                                                     
  /*-------------------------------------------------------------------------------------------*
    | MACRO NAME	 : 	PROCTCAE_toxTables
-   | VERSION	 : 	1.0.3
+   | VERSION	 : 	1.0.4
    | SHORT DESC  : 	Creates toxicity tables for individual and composite PRO-CTCAE survey items.
    |
    *------------------------------------------------------------------------------------------*
@@ -106,8 +106,9 @@
    | Purpose   : The output file to be created within the output directory (must be used with output_dir)
    |
    | Name      : arm_var
-   | Type      : Valid variable name (must be a character variable)
-   | Purpose   : Field name of arm variable differentiating treatment groups
+   | Type      : Valid variable name (must be a character variable). 
+   | Purpose   : Field name of arm variable differentiating treatment groups. The arm names may not
+   |			 begin with numbers/special characters. Avoid using spaces in arm names.
    | Default   : Overall frequencies will be reported (if no arm/grouping variable is provided)
    |
    | Name      : test
@@ -418,6 +419,9 @@
     	%goto exit;
     %end;
     
+    
+    /* -- add check to check for valid arm_var entry -- */
+    
 	
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Defaults / references --- */
@@ -516,11 +520,11 @@
 	/* ---------------------------------------------------------------------------------------------------- */	
 	/* --- Error checks (2 of 2) --- */
 	/* ---------------------------------------------------------------------------------------------------- */
-	proc sort data=&dsn.(keep=&id_var. &cycle_var.) out=_null_ nodupkey dupout=____dup_check0;
+	proc sort data=____&dsn.(keep=&id_var. &cycle_var.) out=_null_ nodupkey dupout=____dup_check0;
 		by &id_var. &cycle_var.;
 	run;
 	data ____dup_check;
-		merge &dsn.(in=a keep=&id_var. &cycle_var.) ____dup_check0 (in=b);
+		merge ____&dsn.(in=a keep=&id_var. &cycle_var.) ____dup_check0 (in=b);
 		by &id_var. &cycle_var.;
 		if b;
 	run;
